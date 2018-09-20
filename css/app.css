@@ -1,0 +1,13 @@
+.top-bar, .top-bar ul {
+	background-color: #59abe3;
+}
+
+.top-bar a {
+	color: white;
+}
+
+.button, .label {
+	-webkit-border-radius: 2px; 
+	-moz-border-radius: 2px; 
+	border-radius: 2px; 
+}
