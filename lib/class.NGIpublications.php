@@ -88,14 +88,14 @@ class NGIpublications {
 	public function checkDB($sources) {
 		if(is_array($sources)) {
 			$now=date('Y-m-d');
-			
+
 			// Fetch data from SciLifeLab publication database
 			foreach($sources as $source) {
 				$data[]=json_decode(file_get_contents($source),TRUE);
 			}
-			
-			// Consolidate lists (pub db has two labels for NGI Stockholm, see above)
-			// Use PMID and/or DOI as key to get rid of duplicates 
+
+			// Consolidate lists (pub db has two labels for NGI Stockholm, see _sync_db
+			// Use PMID and/or DOI as key to get rid of duplicates
 			foreach($data as $set) {
 				foreach($set['publications'] as $publication) {
 					if($publication['pmid']>0) {
@@ -115,22 +115,33 @@ class NGIpublications {
 					$local['doi'][$paper['doi']]=$paper['status'];
 				}
 			}
-				
+
 			// Check which PMID's exist in local db
 			foreach($remote['pmid'] as $pmid) {
+				$list['total'][] = $pmid;
 				//if($check=sql_fetch("SELECT pmid FROM publications WHERE pmid=$pmid")) {
 				if(array_key_exists($pmid, $local['pmid'])) {
 					// Paper already exist in local db
 					if($local['pmid'][$pmid]!='') {
-						// Status already set, DO NOT CHANGE!
-						// Report if matches with "discarded" or "maybe"
-						if($local['pmid'][$pmid]=='discarded' || $local['pmid'][$pmid]=='maybe') {
+						// Status already set
+						// If verified, note that it is also added
+						if ($local['pmid'][$pmid]=='verified') {
+							$update=sql_query("UPDATE publications SET status='verified_and_added' WHERE pmid=$pmid");
+							$list['verified_and_added'][]=$pmid;
+						} elseif ($local['pmid'][$pmid]=='discarded' || $local['pmid'][$pmid]=='maybe') {
+							// Report if matches with "discarded" or "maybe"
 							$list['mismatch'][]=$pmid;
+						} elseif ($local['pmid'][$pmid]=='auto' || $local['pmid'][$pmid]=='verified_and_added') {
+							$list['no_change'][]=$pmid;
+						} else {
+							$list['other_unknown_status'][] = $pmid;
 						}
 					} else {
-						// Status not set, set status to "auto". 
+						// This should be a quite rare case
+						// Status not set, set status to "auto".
 						// Use "auto" since it might be good to double check these, there has been some erroneously added papers in the past
 						$update=sql_query("UPDATE publications SET status='auto',submitted='$now' WHERE pmid=$pmid");
+						$list['auto'][]=$pmid;
 					}
 				} else {
 					// Paper does not exist in local db
