@@ -1,19 +1,19 @@
 <?php
 require 'lib/global.php';
 
+$errors = [];
 if($USER->auth>0) {
 	if(isset($_REQUEST['lab_id'])) {
 		$pubmed=new PHPMed();
 		$researchers=new NGIresearchers();
 		$publications=new NGIpublications();
-		
+
 		if($lab=$researchers->getLab($_REQUEST['lab_id'])) {
 			$added=0;
 			$found=0;
-			
+
 			$data=$pubmed->parsedSearch($lab['query']['query_string']['pi']);
-			$found=count($data['result']['uids']);
-			
+			$found=count($data);
 			foreach($data as $pmid => $article) {
 				$add=$publications->addPublication($article,$lab);
 				if($add['data']['status']=="added") {

@@ -3,44 +3,46 @@
 
 $CONFIG=array(
 	'site' => array(
-		'name'		=> '', 
-		'url'		=> '', 
-		'subdir'	=> '', 
+		'name'		=> '',
+		'url'		=> '',
+		'subdir'	=> '',
 		'admin'		=> ''
-	), 
+	),
 	'mysql' => array(
-		'user' 		=> '', 
-		'pass' 		=> '', 
+		'user' 		=> '',
+		'pass' 		=> '',
 		'db' 		=> '',
 		'server'	=> ''
-	), 
+	),
 	'clarity' => array(
-		'user' 		=> '', 
-		'pass' 		=> '', 
+		'user' 		=> '',
+		'pass' 		=> '',
 		'uri'		=> ''
-	), 
+	),
 	'couch' => array(
-		'user' 		=> '', 
-		'pass' 		=> '', 
-		'host'		=> '', 
-		'port'		=> , 
+		'user' 		=> '',
+		'pass' 		=> '',
+		'host'		=> '',
+		'port'		=> ,
 		'views'		=> array(
-			'users'		=> '', 
+			'users'		=> '',
 			'projects'	=> ''
 		)
-	), 
+	),
 	'portal' => array(
-		'user' 		=> '', 
-		'pass' 		=> '', 
+		'user' 		=> '',
+		'pass' 		=> '',
 		'host'		=> ''
-	), 
+	),
 	'uservalidation' => array(
-		'allowed'	=> FALSE, 
-		'salt'		=> '', 
+		'allowed'	=> FALSE,
+		'salt'		=> '',
 		'roles'		=> array('Unregistered','User','Manager','Administrator'),
 		'status'	=> array('Blocked','Unconfirmed','Active')
-	), 
+	),
 	'publications' => array(
+		'max_days' => 365,
+		'parse_cmd' => 'check_publis.py',
 		'keywords'	=> array(
 		)
 	)
