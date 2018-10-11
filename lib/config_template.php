@@ -41,7 +41,7 @@ $CONFIG=array(
 		'status'	=> array('Blocked','Unconfirmed','Active')
 	),
 	'publications' => array(
-		'max_days' => 365,
+		'max_days' => 730,
 		'parse_cmd' => 'check_publis.py',
 		'keywords'	=> array(
 		)

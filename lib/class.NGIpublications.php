@@ -552,7 +552,7 @@ class NGIpublications {
 	*/
 
 	private function parseAuthors($publication_id,$lab_data) {
-		$errors[]='';
+		$errors=[]; $added=[]; $matched=[];
 		if(is_array($lab_data)) {
 			if($publication_id=filter_var($publication_id,FILTER_VALIDATE_INT)) {
 				if($publication=sql_fetch("SELECT * FROM publications WHERE id=$publication_id")) {

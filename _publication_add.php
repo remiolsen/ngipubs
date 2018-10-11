@@ -1,6 +1,7 @@
 <?php
 require 'lib/global.php';
 
+global $CONFIG;
 $errors = [];
 if($USER->auth>0) {
 	if(isset($_REQUEST['lab_id'])) {
@@ -12,7 +13,14 @@ if($USER->auth>0) {
 			$added=0;
 			$found=0;
 
-			$data=$pubmed->parsedSearch($lab['query']['query_string']['pi']);
+			// Build pubmed query with a limitation on publication date
+			date_default_timezone_set('UTC');
+			$timestamp = time() - ($CONFIG['publications']['max_days'] * 86400);
+			$dt = date('Y/m/d', $timestamp);
+			$pmq = '('.$lab['query']['query_string']['pi'].')' . ' AND ("'.$dt.'"[Date - Publication] : "3000"[Date - Publication])';
+			error_log(print_r($pmq, true));
+
+			$data=$pubmed->parsedSearch($pmq);
 			$found=count($data);
 			foreach($data as $pmid => $article) {
 				$add=$publications->addPublication($article,$lab);
