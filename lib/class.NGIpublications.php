@@ -231,95 +231,41 @@ class NGIpublications {
 			return FALSE;
 		}
 	}
-	
-	// Show data for single publication (extended info compared to list)
-	public function showPublication($publication_id) {
-		if(filter_var($publication_id,FILTER_VALIDATE_INT)) {
-			if($publication=sql_fetch("SELECT * FROM publications WHERE id='$publication_id' LIMIT 1")) {
-				$output=$this->formatPublication($this->publicationData($publication),TRUE);
-			} else {
-				$output='ERROR: could not retrieve publication data';
-			}
-		} else {
-			$output='ERROR: invalid publication ID';
-		}
 		
-		return $output;
-	}
-	
-	
-	public function showSelectedPublications($sql) {
-		if(is_object($sql)) {
-			while($publication=$sql->fetch_assoc()) {
-				$output.=$this->formatPublication($this->publicationData($publication));
-			}
-		} else {
-			$output='ERROR: no publications to show';
+	public function showPublicationList($sql,$page,$limit=10) {
+		$output='';
+		$pagination_string='';
+		if(!$page=filter_var($page,FILTER_VALIDATE_INT)) {
+			$page=1;
 		}
-		
-		/*
-		foreach($data as $id) {
-			if($id=filter_var($id,FILTER_VALIDATE_INT)) {
-				$verified[]=$id;
-			}
-		}
-		
-		if(count($verified)>0) {
-			$verified_string=implode(',',$verified);
-			
-			switch($type) {
-				default:
-				case 'id':
-					$query=sql_query("SELECT * FROM publications WHERE id IN($verified_string)");
-				break;
+		$total=$sql->num_rows;
+		if($total>0) {
+			$pages=ceil($total/$limit);
+			$show_first=($page-1)*$limit+1;
+			$show_last=$page*$limit;
+			if($page>0 && $page<=$pages) {
+				$pagination=new zurbPagination();
+				$pagination_string=$pagination->paginate($page,$pages,$_GET);
 				
-				case 'pmid':
-					$query=sql_query("SELECT * FROM publications WHERE pmid IN($verified_string)");
-				break;
-			}
-	
-			if($query->num_rows>0) {
-				$output='';
-				while($publication=$query->fetch_assoc()) {
-					$output.=$this->formatPublication($this->publicationData($publication));
+				$n=1;
+				while($publication=$sql->fetch_assoc()) {
+					if($n>=$show_first && $n<=$show_last) {
+						$output.=$this->formatPublication($publication);
+					}
+					$n++;
 				}
 			} else {
-				// No publications...
-				$output='ERROR: no publications to show';
+				$output='ERROR: page out of range';
 			}
 		} else {
-			$output='ERROR: no publications to show';
-		}
-		*/
-		
-		return $output;
-	}
-	
-	// Show list of publications
-	public function showPublicationList($year=FALSE) {
-		if(filter_var($year,FILTER_VALIDATE_INT) && strlen($year)==4) {
-			// Select specific year
-			$query=sql_query("SELECT * FROM publications WHERE pubdate>='$year-01-01' AND pubdate<='$year-12-31' ORDER BY score DESC");
-		} else {
-			// List all publications
-			$query=sql_query("SELECT * FROM publications");
+			$output='No records found';
 		}
 		
-		if($query->num_rows>0) {
-			$output='';
-			while($publication=$query->fetch_assoc()) {
-				$output.=$this->formatPublication($this->publicationData($publication));
-			}
-		} else {
-			// No publications...
-			$output='ERROR: no publications to show';
-		}
-		
-		return $output;
+		return array('list' => $output, 'pagination' => $pagination_string);
 	}
 	
 	// Fetch additional metadata
-	public function publicationData($publication) {
+	private function publicationData($publication) {
 		$authors=json_decode($publication['authors'],TRUE);
 		foreach($authors as $author) {
 			$author_data[]=$author['name'];
@@ -341,8 +287,12 @@ class NGIpublications {
 		return array('data' => $publication, 'authors' => $author_data, 'researchers' => $researcher_list);
 	}
 	
-	public function formatPublication($publication,$details=FALSE) {
+	// Format and display details of a publication from the database
+	public function formatPublication($publication) {
+		$publication=$this->publicationData($publication);
+		
 		$container=new htmlElement('div');
+		$container->set('id','publ-'.$publication['data']['id']);
 
 		if(is_array($publication)) {
 			$volume=empty($publication['data']['volume']) ? '' : $publication['data']['volume'];
@@ -352,27 +302,27 @@ class NGIpublications {
 			
 			switch($publication['data']['status']) {
 				default:
-					$publication_status='<span class="label" id="status_label">Pending</span> ';
+					$publication_status='<span class="label" id="status_label-'.$publication['data']['id'].'">Pending</span> ';
 					$container->set('class','callout secondary');
 				break;
 				
 				case 'verified':
-					$publication_status='<span class="label success" id="status_label">Verified</span> ';
+					$publication_status='<span class="label success" id="status_label-'.$publication['data']['id'].'">Verified</span> ';
 					$container->set('class','callout success');
 				break;
 				
 				case 'auto':
-					$publication_status='<span class="label warning" id="status_label">Auto</span> ';
+					$publication_status='<span class="label warning" id="status_label-'.$publication['data']['id'].'">Auto</span> ';
 					$container->set('class','callout warning');
 				break;
 				
 				case 'maybe':
-					$publication_status='<span class="label warning" id="status_label">Maybe</span> ';
+					$publication_status='<span class="label warning" id="status_label-'.$publication['data']['id'].'">Maybe</span> ';
 					$container->set('class','callout warning');
 				break;
 				
 				case 'discarded':
-					$publication_status='<span class="label alert" id="status_label">Discarded</span> ';
+					$publication_status='<span class="label alert" id="status_label-'.$publication['data']['id'].'">Discarded</span> ';
 					$container->set('class','callout alert');
 				break;
 			}
@@ -387,7 +337,8 @@ class NGIpublications {
 			foreach($keyword_array as $keyword) {
 				$keyword_string.='<span class="label secondary">'.$keyword.'</span> ';
 			}
-
+			
+			// Set up containers
 			$row=new htmlElement('div');
 			$row->set('class','row');
 
@@ -397,28 +348,32 @@ class NGIpublications {
 			$tools=new htmlElement('div');
 			$tools->set('class','large-2 columns');
 
+			//Content
 			$title=new htmlElement('h5');
-			$title->set('text',$publication_status.'<span class="label">'.$publication['data']['score'].'</span> '.html_entity_decode($publication['data']['title']));
+			$title->set('text',$publication_status.'<span class="label">'.$publication['data']['score'].'</span> '.html_entity_decode($publication['data']['title']).' (<a href="https://www.ncbi.nlm.nih.gov/pubmed/'.$publication['data']['pmid'].'">Pubmed</a>)');
 
 			$ref=new htmlElement('p');
-			if($details) {
-				$ref->set('text',implode(', ', $publication['authors']).'<br>'.date('Y',strtotime($publication['data']['pubdate'])).', '.$publication['data']['journal'].', '.$reference);
-			} else {
-				$ref->set('text',$publication['authors'][0].' et. al. '.date('Y',strtotime($publication['data']['pubdate'])).', '.$publication['data']['journal'].', '.$reference);
-			}
+			$ref->set('text',$publication['authors'][0].' et. al. '.date('Y',strtotime($publication['data']['pubdate'])).', '.$publication['data']['journal'].', '.$reference);
+			
+			$authors=new htmlElement('p');
+			$authors->set('text',implode(', ', $publication['authors']).'<br>');
+
+			$abstract=new htmlElement('p');
+			$abstract->set('text',$publication['data']['abstract']);
 
 			$researchers=new htmlElement('p');
 			$researchers->set('text','Matched authors: '.$researcher_string.'<br>Matched keywords: '.$keyword_string);
+			
+			$detailed_content=new htmlElement('div');
+			$detailed_content->inject($authors);
+			$detailed_content->inject($abstract);
+			$detailed_content->inject($researchers);
+			
+			$accordion=new zurbAccordion(TRUE,TRUE);
+			$accordion->addAccordion('Details',$detailed_content->output());
 
-			$tools_read=new htmlElement('a');
-			$tools_read->set('href','publications.php?id='.$publication['data']['id']);
-			$tools_read->set('class','tiny button expanded');
-			$tools_read->set('text','Read');
-
-			$tools_pubmed=new htmlElement('a');
-			$tools_pubmed->set('href','https://www.ncbi.nlm.nih.gov/pubmed/'.$publication['data']['pmid']);
-			$tools_pubmed->set('class','tiny button expanded');
-			$tools_pubmed->set('text','Pubmed');
+			$details=new htmlElement('div');
+			$details->set('text',$accordion->render());
 
 			$tools_verify=new htmlElement('span');
 			$tools_verify->set('class','tiny success button expanded verify_button');
@@ -437,23 +392,11 @@ class NGIpublications {
 
 			$main->inject($title);
 			$main->inject($ref);
-			$main->inject($researchers);
+			$main->inject($details);
 			
-			if($details) {
-				$abstract=new htmlElement('p');
-				$abstract->set('text',$publication['data']['abstract']);
-	
-				$main->inject($abstract);
-			}
-			
-			if($details) {
-				$tools->inject($tools_pubmed);
-				$tools->inject($tools_verify);
-				$tools->inject($tools_maybe);
-				$tools->inject($tools_discard);
-			} else {
-				$tools->inject($tools_read);
-			}
+			$tools->inject($tools_verify);
+			$tools->inject($tools_maybe);
+			$tools->inject($tools_discard);
 
 			$row->inject($main);
 			$row->inject($tools);

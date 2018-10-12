@@ -114,7 +114,8 @@ $(document).ready(function() {
 			data: { publication_id: id, type: 'verify'}, 
 			dataType: 'json', 
 			success: function(json) {
-				$('#status_label').text('Verified').addClass('success');
+				$('#status_label-' + id).text('Verified').addClass('success');
+				$('#publ-' + id).addClass('success');
 			}
 		});
 	});
@@ -127,7 +128,8 @@ $(document).ready(function() {
 			data: { publication_id: id, type: 'discard'}, 
 			dataType: 'json', 
 			success: function(json) {
-				$('#status_label').text('Discarded').addClass('alert');
+				$('#status_label-' + id).text('Discarded').addClass('alert');
+				$('#publ-' + id).addClass('alert');
 			}
 		});
 	});
@@ -140,7 +142,8 @@ $(document).ready(function() {
 			data: { publication_id: id, type: 'maybe'}, 
 			dataType: 'json', 
 			success: function(json) {
-				$('#status_label').text('Maybe').addClass('warning');
+				$('#status_label-' + id).text('Maybe').addClass('warning');
+				$('#publ-' + id).addClass('warning');
 			}
 		});
 	});

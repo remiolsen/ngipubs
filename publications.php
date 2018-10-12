@@ -1,59 +1,82 @@
 <?php
 require 'lib/global.php';
-$pubmed=new PHPMed();
-$researchers=new NGIresearchers();
 $publications=new NGIpublications();
 
 if($USER->auth>0) {
-	if(isset($_GET['id'])) {
-		$output=$publications->showPublication($_GET['id']);
-	} else {
-		if(filter_var($_REQUEST['year'],FILTER_VALIDATE_INT)) {
-			$output=$publications->showPublicationList($_REQUEST['year']);
-		} else {
-			$output=$publications->showPublicationList(date("Y"));
-		}
+	$years=range(2010, date('Y')+1);
+	$years_select=array_combine($years,$years);
+	$years_select[0]="All";
+	asort($years_select);
 
-		//----------------------------------------------------
-		// "Sync" with SciLifeLab Publications database
+	$filterform=new htmlForm("publications.php","get",4);
+	$filterform->addSelect("Status","status",array('all' => 'All', 'verified' => 'Verified', 'discarded' => 'Discarded', 'maybe' => 'Maybe', 'auto' => 'Auto'),$_GET);
+	$filterform->addSelect("Year","year",$years_select,$_GET);
+	$filterform->addSelect("Order by","order_by",array('score' => 'Score', 'pubdate' => 'Publication date'),$_GET);
+	$filterform->addSelect("Sort","sort",array('desc' => 'Descending', 'asc' => 'Ascending'),$_GET);
+	$filterform->addInput("",array('type' => 'submit', 'name' => 'submit', 'value' => 'Filter search', 'class' => 'button'));
 
-		/*
-		// JSON sources for Production and Applications papers in the SciLifeLab database
-		$sources=array(
-			'https://publications.scilifelab.se/label/NGI%20Stockholm%20%28Genomics%20Production%29.json', 
-			'https://publications.scilifelab.se/label/NGI%20Stockholm%20%28Genomics%20Applications%29.json'
-		);
-		$list=$publications->checkDB($sources);
-		
-		// Auto add missing papers
-		$autoadd_data=$pubmed->summary($list['missing']);
-		
-		// OBS! This will NOT parse authors since no lab is given, however this will be done if the PMID shows up in searches
-		// Not a big issue since this is likely only a one-time event and only for old papers
-		$add_papers=$publications->addBatch($autoadd_data,FALSE); 
+	switch($_GET['order_by']) {
+		default:
+		case 'score':
+			$order_string=" ORDER BY score";
+		break;
 
-		//These two papers are listed in publications db but classified here as "discarded" - double check these!
-		// 27913302: NGI labels removed in pub db (seq on HiSeq 1500)
-
-		if(count($list['mismatch'])>0) {
-			$missing=implode(',', $list['mismatch']);
-			$query=sql_query("SELECT * FROM publications WHERE pmid IN($missing)");
-			$output=$publications->showSelectedPublications($query);
-		}
-		*/
-		
-		//----------------------------------------------------
-		// Examples
-		
-		//$publist=$publications->listPublications(2017);
-		//$output=$publications->formatPubList($publist);
-
-		//$query=sql_query("SELECT * FROM publications WHERE status IS NULL AND score>5 AND pubdate>='2017-01-01' ORDER BY score DESC");
-		//$query=sql_query("SELECT * FROM publications WHERE status='maybe' AND pubdate>='2017-01-01' ORDER BY score DESC");
-		//$output=$publications->showSelectedPublications($query);
-
-		//----------------------------------------------------
+		case 'pubdate':
+			$order_string=" ORDER BY pubdate";
+		break;
 	}
+
+	switch($_GET['sort']) {
+		default:
+		case 'desc':
+			$order_string.=" DESC";
+		break;
+
+		case 'asc':
+			$order_string.=" ASC";
+		break;
+	}
+	
+	switch($_GET['status']) {
+		default:
+		case 'all':
+			$filters=array();
+		break;
+
+		case 'verified':
+			$filters[]="status='verified'";
+		break;
+
+		case 'discarded':
+			$filters[]="status='discarded'";
+		break;
+
+		case 'maybe':
+			$filters[]="status='maybe'";
+		break;
+
+		case 'auto':
+			$filters[]="status='auto'";
+		break;
+
+		case 'pending':
+			$filters[]="status IS NULL";
+		break;
+	}
+	
+	if($year=filter_input(INPUT_GET,'year',FILTER_VALIDATE_INT,array('min_range' => 2000,'max_range' => 2100))) {
+		$filters[]="pubdate>='$year-01-01' AND pubdate<='$year-12-31'";
+	}
+	
+	$query_string="SELECT * FROM publications";
+	
+	if(count($filters)>0) {
+		$query_string.=' WHERE '.implode(' AND ',$filters);
+	}
+	
+	$query=sql_query($query_string.$order_string);
+
+	$publication_list=$publications->showPublicationList($query,$_GET['page']);
 } else {
 	// Not logged in
 	header('Location:login.php');
@@ -71,7 +94,7 @@ if($USER->auth>0) {
 	<meta http-equiv="x-ua-compatible" content="ie=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><?php echo $CONFIG['site']['name']; ?></title>
-	<link rel="stylesheet" href="css/foundation.css">
+	<link rel="stylesheet" href="css/foundation.min.css">
 	<link rel="stylesheet" href="css/app.css">
 	<link rel="stylesheet" href="css/icons/foundation-icons.css" />
 </head>
@@ -82,14 +105,19 @@ if($USER->auth>0) {
 <div class="row">
 	<br>
 	<div class="large-12 columns">
-		<?php echo $output; ?>
-		<?php //echo $table->render(); ?>
+		<?php echo $filterform->render(); ?>
+	</div>
+	<div class="large-12 columns">
+		<?php echo $publication_list['list']; ?>
+	</div>
+	<div class="large-12 columns">
+		<?php echo $publication_list['pagination']; ?>
 	</div>
 </div>
 
 <script src="js/vendor/jquery.js"></script>
 <script src="js/vendor/what-input.js"></script>
-<script src="js/vendor/foundation.js"></script>
+<script src="js/vendor/foundation.min.js"></script>
 <script src="js/app.js"></script>
 </body>
 
