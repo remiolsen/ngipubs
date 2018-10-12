@@ -18,7 +18,6 @@ if($USER->auth>0) {
 			$timestamp = time() - ($CONFIG['publications']['max_days'] * 86400);
 			$dt = date('Y/m/d', $timestamp);
 			$pmq = '('.$lab['query']['query_string']['pi'].')' . ' AND ("'.$dt.'"[Date - Publication] : "3000"[Date - Publication])';
-			error_log(print_r($pmq, true));
 
 			$data=$pubmed->parsedSearch($pmq);
 			$found=count($data);

@@ -265,7 +265,8 @@ class NGIpublications {
 				$unique_keywords=array();
 
 				if(trim($publication['data']['abstract'])!='') {
-					if(preg_match_all("($keyword_list)", strtolower($publication['data']['abstract']),$matches)) {
+					$text = $publication['data']['abstract'].' '.$publication['matches'];
+					if(preg_match_all("($keyword_list)", strtolower($text),$matches)) {
 						$total_matches=count($matches[0]);
 						$unique_keywords=array_values(array_unique($matches[0]));
 
@@ -304,7 +305,11 @@ class NGIpublications {
 	// Show data for single publication (extended info compared to list)
 	public function showPublication($publication_id) {
 		if(filter_var($publication_id,FILTER_VALIDATE_INT)) {
-			if($publication=sql_fetch("SELECT * FROM publications WHERE id='$publication_id' LIMIT 1")) {
+			$publication=sql_fetch("SELECT p.*, t.status as text_status, t.text
+				FROM publications as p
+				LEFT JOIN publications_text AS t ON p.id = t.publication_id
+				WHERE p.id = $publication_id LIMIT 1");
+			if($publication) {
 				$output=$this->formatPublication($this->publicationData($publication),TRUE);
 			} else {
 				$output='ERROR: could not retrieve publication data';
@@ -312,7 +317,6 @@ class NGIpublications {
 		} else {
 			$output='ERROR: invalid publication ID';
 		}
-
 		return $output;
 	}
 
@@ -394,6 +398,20 @@ class NGIpublications {
 			$author_data[]=$author['name'];
 		}
 
+		$ptext = sql_fetch("
+			SELECT text
+			FROM publications_text
+			WHERE publication_id=".$publication['id']);
+		$matches = "";
+		if($ptext) {
+			$text = json_decode($ptext['text']);
+			if(is_array($text) && count($text)>0) {
+				foreach($text as $t) {
+					$matches .= " ".$t[1];
+				}
+			}
+		}
+
 		$xref=sql_query("
 			SELECT *
 			FROM publications_xref
@@ -407,7 +425,7 @@ class NGIpublications {
 			}
 		}
 
-		return array('data' => $publication, 'authors' => $author_data, 'researchers' => $researcher_list);
+		return array('data' => $publication, 'authors' => $author_data, 'researchers' => $researcher_list, 'matches' => $matches);
 	}
 
 	public function formatPublication($publication,$details=FALSE) {
@@ -507,15 +525,34 @@ class NGIpublications {
 			$main->inject($title);
 			$main->inject($ref);
 			$main->inject($researchers);
-
-			if($details) {
-				$abstract=new htmlElement('p');
-				$abstract->set('text',$publication['data']['abstract']);
-
-				$main->inject($abstract);
+			$matches = json_decode($publication['data']['text']);
+			$amatches = [];
+			foreach($matches as $match) {
+				$amatches[$match[0]][] = $match[1];
 			}
-
+			$bmatches = array_map(function($ar){ return implode("...<br/>",$ar); }, $amatches);
 			if($details) {
+				if($bmatches) {
+					$dummy = new htmlElement('div');
+					$m = '<ul class="accordion" data-accordion>';
+					foreach($bmatches as $key => $match){
+						$mtext = preg_replace('/'.$key.'/i', '<mark>${0}</mark>', $match);
+						$m .= '<li class="accordion-item" data-accordion-item>';
+						$m .= '<a href=#l_'.$key.' class="accordion-title">'.$key.'</a>';
+						$m .= '<div class="accordion-content" data-tab-content>'.$mtext.'</div>';
+						$m .= '</li>';
+					}
+					$m .= '</ul>';
+					$dummy->set('text',$m);
+					$main->inject($dummy);
+				}
+				else {
+					$abstract=new htmlElement('p');
+					$abstract->set('text',$publication['data']['abstract']);
+
+					$main->inject($abstract);
+				}
+
 				$tools->inject($tools_pubmed);
 				$tools->inject($tools_verify);
 				$tools->inject($tools_maybe);
