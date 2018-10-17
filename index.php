@@ -31,6 +31,25 @@ if($USER->auth>0) {
 <div class="row">
 	<br>
 	<div class="large-12 columns">
+		<div class="card">
+			<div class="card-divider">
+				Clarity LIMS sync status
+			</div>
+			<div class="card-section large-6 columns">
+				<div id="clarity_status"></div>
+				<br>
+				<div class="button-group">
+					<button class="small button right" id="load_clarity">Update</button>
+				</div>
+			</div>
+			<div class="card-section large-6 columns" id="clarity_status_message"></div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<br>
+	<div class="large-12 columns">
 		
 	</div>
 </div>

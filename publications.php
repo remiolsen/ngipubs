@@ -1,8 +1,9 @@
 <?php
 require 'lib/global.php';
-$publications=new NGIpublications();
 
 if($USER->auth>0) {
+	$publications=new NGIpublications();
+
 	$years=range(2010, date('Y')+1);
 	$years_select=array_combine($years,$years);
 	$years_select[0]="All";
