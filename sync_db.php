@@ -35,9 +35,21 @@ if($USER->auth>0) {
 <div class="row">
 	<br>
 	<div class="large-12 columns">
-		<span class="start_sync button">Begin syncing from publications.scilifelab.se</span>
+		<div class="card">
+			<div class="card-divider">
+				Syncronize from <a href="https://publications.scilifelab.se">publications.scilifelab.se</a>
+			</div>
+			<div class="card-section large-6 columns">
+				<span class="start_sync button">Begin syncing from publications.scilifelab.se</span>
+				<p>
+					This will fetch all publications stored at <a href="https://publications.scilifelab.se">publications.scilifelab.se</a>
+					and mark each of them accordingly in this database.
+				</p>
+			</div>
+			<div class="card-section large-6 columns" id="sync_status_message">
+			</div>
+		</div>
 	</div>
-	<div class="card-section large-6 columns" id="sync_status_message"></div>
 </div>
 
 <script src="js/vendor/jquery.js"></script>
