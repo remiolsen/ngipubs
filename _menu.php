@@ -6,7 +6,7 @@ $menu->listItem('<a href="index.php">Dashboard</a>');
 
 if($USER->auth>0) {
 	// Logged in
-	$menu->listItem('<a href="publications.php">Publications</a>');
+	$menu->listItem('<a href="publications.php">All publications</a>');
 	$menu->listItem('<a href="researchers.php">Researchers and Labs</a>');
 	$menu->listItem('<a href="users.php">Users</a>');
 	$user_status_button="<li>".$USER->data['user_email']."&nbsp;</li><li><button type=\"button\" class=\"small button\" onclick=\"location.href='logout.php'\">Logout</button></li>";

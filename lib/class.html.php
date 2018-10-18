@@ -187,7 +187,7 @@ class htmlElement {
 class htmlTable {
 	var $children;
 	
-	function __construct($title,$attrib=array()) {
+	function __construct($title='',$attrib=array()) {
 		$this->parentelement=new htmlElement('table');
 		$this->parentelement->set($attrib);
 		$caption=new htmlElement('caption');
@@ -199,7 +199,7 @@ class htmlTable {
 		$first_row=array_shift($data);
 		if($this->hasStringKeys($first_row)) {
 			$tablehead=new htmlElement('thead');
-			$cols=array_keys($data[0]); // Get table headers
+			$cols=array_keys($first_row); // Get table headers
 			if(is_array($cols)) {
 				$row=new htmlElement('tr');
 				foreach($cols as $key => $value) {

@@ -2,7 +2,20 @@
 require 'lib/global.php';
 
 if($USER->auth>0) {
+	$publications=new NGIpublications();
+	$year=$CONFIG['publications']['current_year'];
 
+	$user_score=$publications->getScoreboard($year,$USER->data['user_email']);
+	$user_score_table=new htmlTable();
+	$user_score_table->addData($user_score);
+
+	$user_score_total=$publications->getScoreboard(FALSE,$USER->data['user_email']);
+	$user_score_total_table=new htmlTable();
+	$user_score_total_table->addData($user_score_total);
+
+	$score_total=$publications->getScoreboard(FALSE,FALSE);
+	$score_total_table=new htmlTable();
+	$score_total_table->addData($score_total);
 } else {
 	// Not logged in
 	header('Location:login.php');
@@ -30,6 +43,46 @@ if($USER->auth>0) {
 
 <div class="row">
 	<br>
+	<div class="large-6 columns">
+		<div class="card">
+			<div class="card-divider">
+				Your score for <?php echo $year; ?>
+			</div>
+			<div class="card-section">
+				<?php echo $user_score_table->render(); ?>
+				<a href="publications_verify.php" class="button">Go get some!</a>
+			</div>
+		</div>
+	</div>
+
+	<div class="large-6 columns">
+		<div class="card">
+			<div class="card-divider">
+				Your total score
+			</div>
+			<div class="card-section">
+				<?php echo $user_score_total_table->render(); ?>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<br>
+	<div class="large-12 columns">
+		<div class="card">
+			<div class="card-divider">
+				Global scoreboard
+			</div>
+			<div class="card-section">
+				<?php echo $score_total_table->render(); ?>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<br>
 	<div class="large-12 columns">
 		<div class="card">
 			<div class="card-divider">
@@ -50,7 +103,13 @@ if($USER->auth>0) {
 <div class="row">
 	<br>
 	<div class="large-12 columns">
-		
+		<div class="card">
+			<div class="card-divider">
+				Pubtrawl status
+			</div>
+			<div class="card-section">
+			</div>
+		</div>
 	</div>
 </div>
 

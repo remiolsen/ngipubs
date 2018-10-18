@@ -19,6 +19,10 @@ class NGIpublications {
 			if($check=sql_fetch("SELECT * FROM publications WHERE id='$publication_id' LIMIT 1")) {
 				$log=$this->addLog('Publication status updated to: '.$status,'update',$check['log']);
 				if($update=sql_query("UPDATE publications SET status='$status', log='$log' WHERE id='$publication_id'")) {
+					// Reset reservation if status is set to maybe so others can pick it up
+					if($status=='maybe') {
+						$reset=sql_query("UPDATE publications SET reservation_user=NULL, reservation_timestamp=NULL WHERE id='$publication_id'");
+					}
 					return TRUE;
 				} else {
 					return FALSE;
@@ -229,6 +233,125 @@ class NGIpublications {
 			}
 		} else {
 			return FALSE;
+		}
+	}
+	
+	// Reserve a list of publications for verification
+	// Each user will get a list of publications selected randomly from unverified and 'maybe'
+	// When the list has been finished a new will be generated.
+	// User must verify all records, use 'maybe' if unsure, before a new one is generated
+	public function reservePublications($user_email,$year,$score=5,$limit=10) {
+		if($user_email=filter_var($user_email,FILTER_VALIDATE_EMAIL)) {
+			$year=filter_var($year,FILTER_VALIDATE_INT);
+			$score=filter_var($score,FILTER_VALIDATE_INT);
+			$limit=filter_var($limit,FILTER_VALIDATE_INT);
+			if($year && $score && $limit) {
+				// Check if user has already reserved papers
+				if(!$check=sql_fetch("SELECT * FROM publications WHERE reservation_user='$user_email' AND status IS NULL")) {
+					// Only reserve new ones if the old list is empty
+					$timestamp=time();
+					$reserve=sql_query("UPDATE publications 
+						SET 
+							reservation_user='$user_email', 
+							reservation_timestamp='$timestamp' 
+						WHERE 
+							pubdate>='$year-01-01' AND 
+							pubdate<='$year-12-31' AND 
+							score>='$score' AND 
+							(status IS NULL OR status='maybe') AND 
+							reservation_user IS NULL 
+						ORDER BY RAND() LIMIT $limit");
+					
+					// Update log on the reserved papers
+					if($updated=sql_query("SELECT * FROM publications WHERE reservation_user='$user_email' AND reservation_timestamp=$timestamp")) {
+						while($publication=$updated->fetch_assoc()) {
+							$log=$this->addLog('Publication reserved for validation by: '.$user_email,'update',$publication['log']);
+							$update_log=sql_query("UPDATE publications SET log='$log' WHERE id=".$publication['id']);
+						}
+					}
+				}
+				
+				// Fetch all reserved un-verified and 'maybe' papers
+				if($query=sql_query("SELECT * FROM publications WHERE reservation_user='$user_email' AND (status IS NULL OR status='maybe')")) {
+					return $query;
+				} else {
+					return FALSE;
+				}
+			} else {
+				return FALSE;
+			}
+		} else {
+			return FALSE;
+		}
+	}
+	
+	// Summarize verified publications
+	public function getScoreboard($year=FALSE,$user=FALSE) {
+		$result=array();
+		if($user=filter_var($user,FILTER_VALIDATE_EMAIL)) {
+			if($year=filter_var($year,FILTER_VALIDATE_INT)) {
+				// Get user score for specified year
+				$query=sql_query("SELECT status,COUNT(*) AS count FROM publications 
+					WHERE 
+						(status='verified' OR status='discarded') AND 
+						pubdate>='$year-01-01' AND 
+						pubdate<='$year-12-31' AND 
+						reservation_user='$user' 
+					GROUP BY status 
+					ORDER BY status DESC");
+			} else {
+				// Get total user score
+				$query=sql_query("SELECT status,COUNT(*) AS count FROM publications 
+					WHERE 
+						(status='verified' OR status='discarded') AND 
+						reservation_user='$user' 
+					GROUP BY status 
+					ORDER BY status DESC");
+			}
+			
+			while($data=$query->fetch_assoc()) {
+				$result[]=array("status" => $data['status'], "count" => $data['count']);
+			}
+			return $result;
+		} else {
+			// Get global scoreboard
+			if($year=filter_var($year,FILTER_VALIDATE_INT)) {
+				// Get user score for specified year
+				$query=sql_query("SELECT reservation_user,status,COUNT(*) AS count FROM publications 
+					WHERE 
+						(status='verified' OR status='discarded') AND 
+						pubdate>='$year-01-01' AND 
+						pubdate<='$year-12-31' AND 
+						reservation_user IS NOT NULL 
+					GROUP BY reservation_user,status 
+					ORDER BY reservation_user,status DESC");
+			} else {
+				// Get total user score
+				$query=sql_query("SELECT reservation_user,status,COUNT(*) AS count FROM publications 
+					WHERE 
+						(status='verified' OR status='discarded') AND 
+						reservation_user IS NOT NULL 
+					GROUP BY reservation_user,status 
+					ORDER BY reservation_user,status DESC");
+			}
+			
+			while($data=$query->fetch_assoc()) {
+				$result[$data['reservation_user']]['name']=$data['reservation_user'];
+				$result[$data['reservation_user']][$data['status']]=$data['count'];
+			}
+			
+			// Calculate total score (sum of verified/discarded papers)
+			foreach($result as $key => $row) {
+				$order[$key]=array_sum($row);
+			}
+			arsort($order);
+			
+			// Format output
+			foreach($order as $key => $score) {
+				$final[]=array('name' => $result[$key]['name'], 'verified' => $result[$key]['verified'], 'discarded' => $result[$key]['discarded'], 'total' => $score);
+			}
+					
+			return $final;
 		}
 	}
 		

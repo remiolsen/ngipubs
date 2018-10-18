@@ -593,7 +593,7 @@ class NGIresearchers {
 		$publications->set('class','small button find_pub');
 		$publications->set('id','lab-'.$lims_id);
 		$publications->set('text','Find publications');
-		if(count($lab_data['errors'])==0) {
+		if(!$lab_data['errors']) {
 			$tools->inject($publications);
 		}
 		$edit_lab=new htmlElement('a');
