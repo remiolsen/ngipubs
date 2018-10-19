@@ -50,9 +50,6 @@ class NGIpublications {
 			$parse_authors=$this->parseAuthors($found['id'],$lab_data);
 			$status='found';
 		} else {
-			// BUG 1: There was an error running the query [Data too long for column 'authors' at row 1] : INSERT INTO publications SET
-			//	pmid='27770183',
-			//	doi='10.1007/BF03375458',
 			// Add publication to database
 			$log=$this->addLog('Publication added by search for lab: '.$lab_data['lab']['lab_name'],'add');
 			try {
@@ -265,11 +262,16 @@ class NGIpublications {
 				$unique_keywords=array();
 
 				if(trim($publication['data']['abstract'])!='') {
-					$text = $publication['data']['abstract'].' '.$publication['matches'];
+					$text = $publication['data']['abstract'];
+					if(is_array($publication['matches']) && count($publication['matches']) > 0) {
+						foreach($publication['matches'] as $mt) {
+							// Matches needs word boundaries. I'll fix this ugliness later.
+							$text .= '\n we have '.$mt.' a match. \n';
+						}
+					}
 					if(preg_match_all("($keyword_list)", strtolower($text),$matches)) {
 						$total_matches=count($matches[0]);
 						$unique_keywords=array_values(array_unique($matches[0]));
-
 						if($total_researchers==0) {
 							// Weight of matched keywords will be lower if there are no matched authors
 							$score=0.5*$total_matches;
@@ -402,13 +404,16 @@ class NGIpublications {
 			SELECT text
 			FROM publications_text
 			WHERE publication_id=".$publication['id']);
-		$matches = "";
+		$matches = [];
 		if($ptext) {
 			$text = json_decode($ptext['text']);
 			if(is_array($text) && count($text)>0) {
+				$m = [];
 				foreach($text as $t) {
-					$matches .= " ".$t[1];
+					$m[$t[0]] = $t[0];
 				}
+				// Only return the matching keywords once
+				$matches = array_keys($m);
 			}
 		}
 
@@ -530,7 +535,7 @@ class NGIpublications {
 			foreach($matches as $match) {
 				$amatches[$match[0]][] = $match[1];
 			}
-			$bmatches = array_map(function($ar){ return implode("...<br/>",$ar); }, $amatches);
+			$bmatches = array_map(function($ar){ return implode("...<br/><br/>",$ar); }, $amatches);
 			if($details) {
 				if($bmatches) {
 					$dummy = new htmlElement('div');

@@ -4,13 +4,13 @@ require 'lib/global.php';
 if($USER->auth>0) {
 	$researchers=new NGIresearchers();
 
-	$lab_list=$researchers->listLabs();	
+	$lab_list=$researchers->listLabs();
 	$lab_errors=$researchers->formatLabList($lab_list['errors']);
 	$all_labs=$researchers->formatLabList($lab_list['all']);
 
 	$res_list=$researchers->listResearchers();
 	$res_errors=$researchers->formatResearcherList($res_list['errors']);
-	
+
 } else {
 	// Not logged in
 	header('Location:login.php');
@@ -80,4 +80,3 @@ if($USER->auth>0) {
 </body>
 
 </html>
-

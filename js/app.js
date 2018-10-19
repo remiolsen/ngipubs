@@ -2,35 +2,35 @@ $(document).foundation();
 
 $(document).ready(function() {
 	updateStatus();
-	
+
 	$("#load_clarity").on("click", function() {
 		$(this).prop("disabled",true).text("Working...");
 		clarityLoad('labs');
 	});
-	
+
 	function clarityLoad(type) {
 		$.ajax({
-			url: '_clarity_load.php', 
-			data: { task: 'load', type: type }, 
-			dataType: 'json', 
+			url: '_clarity_load.php',
+			data: { task: 'load', type: type },
+			dataType: 'json',
 			beforeSend: function() {
 				$("#clarity_status_message").append('Loading ' + type + '...<br>');
-			}, 
+			},
 			success: function(json) {
 				$("#clarity_status_message").append(json.message + '<br>');
 				updateDB(type);
 			}
 		});
 	}
-	
+
 	function updateDB(type) {
 		$.ajax({
-			url: '_clarity_load.php', 
-			data: { task: 'update', type: type }, 
-			dataType: 'json', 
+			url: '_clarity_load.php',
+			data: { task: 'update', type: type },
+			dataType: 'json',
 			beforeSend: function() {
 				$("#clarity_status_message").append('Updating database for ' + type + '...<br>');
-			}, 
+			},
 			success: function(json) {
 				$("#clarity_status_message").append(json.message + '<br>');
 				if(type == 'labs') {
@@ -43,67 +43,129 @@ $(document).ready(function() {
 			}
 		});
 	}
-	
+
 	function updateStatus() {
 		$.ajax({
-			url: '_clarity_status.php', 
-			dataType: 'html', 
+			url: '_clarity_status.php',
+			dataType: 'html',
 			success: function(html) {
 				$("#clarity_status").html(html);
 			}
 		});
 	}
-	
+
 	$('.find_pub').on('click', function() {
 		var button = this;
 		var id = $(this).attr('id').split('-')[1];
  		$.ajax({
-			url: '_publication_add.php', 
-			data: { lab_id: id }, 
-			dataType: 'json', 
+			url: '_publication_add.php',
+			data: { lab_id: id },
+			dataType: 'json',
 			beforeSend: function() {
 				$(button).text('Processing...');
-			}, 
+			},
 			success: function(json) {
 				if(json.found>0) {
 					foundstring = '(found ' + json.found + ' already in database)';
 				} else {
 					foundstring = '';
 				}
-				
+
 				$(button).text('Added ' + json.added + ' publications ' + foundstring);
 			}
 		});
 	});
 
-	$('.start_trawl').on('click', function() {
-		$.getJSON( "cache/trawltest.json", function( data ) {
-			var items = [];
-			$.each( data.lab_list, function( id, lab ) {
-				var trawl = $.ajax({
-					url: '_publication_add.php', 
-					data: { lab_id: id }, 
-					dataType: 'json', 
-					beforeSend: function() {
-						$('#status-' + id).text('Processing...');
-					}, 
-					success: function(json) {
-						if(json.found>0) {
-							foundstring = '(found ' + json.found + ' already in database)';
-						} else {
-							foundstring = '';
-						}
-						
-						$('#result-' + id).text('Added ' + json.added + ' publications ' + foundstring);
-						$('#status-' + id).addClass('success').text('Done');
+	// https://stackoverflow.com/questions/4785724/queue-ajax-requests-using-jquery-queue#4785886
+	var ajaxManager = (function() {
+	     var requests = [];
+
+	     return {
+	        addReq:  function(opt) {
+	            requests.push(opt);
+	        },
+	        removeReq:  function(opt) {
+	            if( $.inArray(opt, requests) > -1 )
+	                requests.splice($.inArray(opt, requests), 1);
+	        },
+	        run: function() {
+	            var self = this,
+	                oriSuc;
+
+	            if( requests.length ) {
+	                oriSuc = requests[0].complete;
+
+	                requests[0].complete = function() {
+	                     if( typeof(oriSuc) === 'function' ) oriSuc();
+	                     requests.shift();
+	                     self.run.apply(self, []);
+	                };
+
+	                $.ajax(requests[0]);
+	            } else {
+	              self.tid = setTimeout(function() {
+	                 self.run.apply(self, []);
+	              }, 1000);
+	            }
+	        },
+	        stop:  function() {
+	            requests = [];
+	            clearTimeout(this.tid);
+	        }
+	     };
+	}());
+
+	$(function() {
+
+		$('.start_trawl').on('click', function() {
+				ajaxManager.run();
+				$('.start_trawl').addClass('disabled');
+				var total = 0
+				$.each(items, function(id,lab) {
+					if(lab['session'] != 'done') {
+						total += 1;
 					}
 				});
-			});
-		});	
-	});
-	
-	$('.pause_trawl').on('click', function() {
-		
+				var i = 0;
+				$.each( items, function( id, lab ) {
+						if(lab['session'] == 'done') {return 'done';};
+						var trawl = ajaxManager.addReq({
+							url: '_publication_add.php',
+							data: { lab_id: id },
+							dataType: 'json',
+							timeout: 600000,
+							beforeSend: function() {
+								$('#status-' + id).text('Processing...');
+							},
+							success: function(json) {
+								if(json.found>0) {
+									foundstring = '(found ' + json.found + ' already in database)';
+								} else {
+									foundstring = '';
+								}
+
+								$('#result-' + id).text('Added ' + json.added + ' publications ' + foundstring);
+								$('#status-' + id).addClass('success').text('Done');
+								items[id].session = 'done';
+							},
+							error: function() {
+								$('#status-' + id).addClass('alert').text('Error');
+								items[id].session = 'error';
+							},
+							complete: function() {
+								sessionStorage.setItem('trawl_list', JSON.stringify(items));
+								i += 1;
+								var pct = i / total * 100;
+								$('#trawltext').html(i+"/"+total);
+								$('#trawlbar').css("width", pct+"%");
+							}
+						});
+				});
+
+		});
+		$('.pause_trawl').on('click', function() {
+			ajaxManager.stop()
+		});
 	});
 
 	$('.start_sync').on('click', function() {
@@ -154,35 +216,35 @@ $(document).ready(function() {
 		var button = this;
 		var id = $(this).attr('id').split('-')[1];
 		$.ajax({
-			url: '_publication_verify.php', 
-			data: { publication_id: id, type: 'verify'}, 
-			dataType: 'json', 
+			url: '_publication_verify.php',
+			data: { publication_id: id, type: 'verify'},
+			dataType: 'json',
 			success: function(json) {
 				$('#status_label').text('Verified').addClass('success');
 			}
 		});
 	});
-	
+
 	$('.discard_button').on('click', function() {
 		var button = this;
 		var id = $(this).attr('id').split('-')[1];
 		$.ajax({
-			url: '_publication_verify.php', 
-			data: { publication_id: id, type: 'discard'}, 
-			dataType: 'json', 
+			url: '_publication_verify.php',
+			data: { publication_id: id, type: 'discard'},
+			dataType: 'json',
 			success: function(json) {
 				$('#status_label').text('Discarded').addClass('alert');
 			}
 		});
 	});
-	
+
 	$('.maybe_button').on('click', function() {
 		var button = this;
 		var id = $(this).attr('id').split('-')[1];
 		$.ajax({
-			url: '_publication_verify.php', 
-			data: { publication_id: id, type: 'maybe'}, 
-			dataType: 'json', 
+			url: '_publication_verify.php',
+			data: { publication_id: id, type: 'maybe'},
+			dataType: 'json',
 			success: function(json) {
 				$('#status_label').text('Maybe').addClass('warning');
 			}

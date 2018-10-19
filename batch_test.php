@@ -3,27 +3,9 @@ require 'lib/global.php';
 $pubmed=new PHPMed();
 $researchers=new NGIresearchers();
 $publications=new NGIpublications();
-$pubtrawl_cache='cache/trawltest.json';
 
 if($USER->auth>0) {
-	if(file_exists($pubtrawl_cache)) {
-		// Trawl has already been started
-		$pubtrawl_json=file_get_contents($pubtrawl_cache);
-		$pubtrawl=json_decode($pubtrawl_json,TRUE);
-		//$last=array_search($pubtrawl['meta']['last'], $pubtrawl['lab_list']);
-		//$labs=array_slice($pubtrawl['lab_list'],$pubtrawl['meta']['last']+1,count($pubtrawl['lab_list']),TRUE);
-	} else {
-		// New trawl
-		$lab_query=sql_query("SELECT * FROM labs ORDER BY lab_name");
-		while($lab=$lab_query->fetch_assoc()) {
-			if($id=$researchers->getClarityID($lab['lab_clarity_uri'])) {
-				$labs[$id]=$lab;
-			}
-		}
 
-		$pubtrawl=array('meta' => array('start' => time(), 'end' => FALSE, 'last' => FALSE), 'lab_list' => $labs, 'data' => array());
-		$update=file_put_contents($pubtrawl_cache, json_encode($pubtrawl));
-	}
 } else {
 	// Not logged in
 	header('Location:login.php');
@@ -52,21 +34,55 @@ if($USER->auth>0) {
 <div class="row">
 	<br>
 	<div class="large-12 columns">
-		<span class="start_trawl button">Begin trawl</span> 
+		<span class="start_trawl button">Begin trawl</span>
 		<span class="pause_trawl warning button">Pause trawl</span>
 	</div>
-	<div class="large-12 columns">
-		<?php
-		foreach($pubtrawl['lab_list'] as $id => $lab) {
-			echo '<span class="secondary label" id="status-'.$id.'">Pending</span> <span id="lab-'.$id.'">'.$lab['lab_name'].'</span><span id="result-'.$id.'"></span><br>';
-		}
-		?>
+	<div class="large-12 columns" id="trawlmeter">
+		<div class="progress" role="progressbar" tabindex="0" aria-valuenow="0" aria-valuemin="0" aria-valuemax="0">
+			<span id="trawlbar" class="progress-meter" style="width: 0%">
+		    <p id="trawltext" class="progress-meter-text"></p>
+		  </span>
+		</div>
+	</div>
+	<div id="trawl_labs" class="large-12 columns">
 	</div>
 </div>
 
 <script src="js/vendor/jquery.js"></script>
 <script src="js/vendor/what-input.js"></script>
 <script src="js/vendor/foundation.js"></script>
+<script type='text/javascript'>
+	$(document).ready(function() {
+		items = "";
+		if (sessionStorage.trawl_list) {
+			items = JSON.parse(sessionStorage.trawl_list);
+		}
+		else {
+			$.ajax({
+				url: "_publication_batch_add.php",
+				async: false,
+				success: function(json) {
+					items = json;
+				}
+			});
+			//items = JSON.parse(req.responseText);
+			sessionStorage.setItem("trawl_list", items);
+			items = JSON.parse(items);
+		}
+		$.each(items, function( id, lab ) {
+			var text = "Pending";
+			var label = "";
+			if(lab['session'] == 'done') {
+				text = "Done"; label = "success";
+			}
+			if(lab['session'] == 'error') {
+				text = "Error"; label = "alert";
+			}
+			var out='<span class="secondary label '+label+'" id="status-'+id+'">'+text+'</span> <span id="lab-'+id+'">'+lab['lab_name']+'</span><span id="result-'+id+'"></span><br>';
+			$('#trawl_labs').append(out);
+		});
+	});
+</script>
 <script src="js/app.js"></script>
 </body>
 

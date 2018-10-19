@@ -397,10 +397,8 @@ class NGIresearchers {
 	}
 
 	public function listLabs($limit=FALSE,$offset=FALSE) {
-		$limit=filter_var($limit,FILTER_VALIDATE_INT);
-		$offset=filter_var($offset,FILTER_VALIDATE_INT);
-		if($limit && $offset) {
-			$labs=sql_query("SELECT * FROM labs WHERE lab_status IS NULL ORDER BY lab_name LIMIT $offset,$limit");
+		if(is_integer($limit) && is_integer($offset)) {
+			$labs=sql_query("SELECT * FROM labs WHERE lab_status IS NULL ORDER BY lab_name LIMIT $limit OFFSET $offset");
 		} else {
 			$labs=sql_query("SELECT * FROM labs WHERE lab_status IS NULL ORDER BY lab_name");
 		}

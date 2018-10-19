@@ -2,7 +2,7 @@
 // Default menu items
 $menu=new htmlList('ul',array('class' => 'menu'));
 $menu->listItem($CONFIG['site']['name'],array('class' => 'menu-text'));
-$menu->listItem('<a href="index.php">Dashboard</a>');
+//$menu->listItem('<a href="index.php">Dashboard</a>');
 
 if($USER->auth>0) {
 	// Logged in
