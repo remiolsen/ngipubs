@@ -105,7 +105,51 @@ $(document).ready(function() {
 	$('.pause_trawl').on('click', function() {
 		
 	});
-	
+
+	$('.start_sync').on('click', function() {
+		$.ajax({
+			url: '_sync_db.php',
+			beforeSend: function() {
+				$("#sync_status_message").append(
+					'<div class="callout primary", id="syncing_ongoing">(imagine a rolling circle) Syncing database against publications.scilifelab.se</div>'
+				);
+			},
+			success: function(json_str) {
+				json = JSON.parse(json_str);
+				$("#syncing_ongoing").remove();
+				if (json["mismatch"] != null && json["mismatch"].length > 0){
+					$("#sync_status_message").append(
+						'<div class="callout alert"> Warning: These publications from publications.scilifelab.se are marked as "maybe" or "discarded": ' + json["mismatch"] + '</br> - Consider to remove these from publications.scilifelab.se </div>'
+					);
+				};
+				if (json["other_unknown_status"] != null && json["other_unknown_status"].length > 0) {
+					$("#sync_status_message").append(
+						'<div class="callout alert"> Warning: These publications from publications.scilifelab.se have unknown statuses in the local database: ' + json["other_unknown_status"] + '</div>'
+					);
+				};
+				if (json["missing"] != null && json["missing"].length > 0) {
+					$("#sync_status_message").append(
+						'<div class="callout alert"> Warning: These publications from publications.scilifelab.se are missing in the local database: ' + json["missing"] + '</div>'
+					);
+				};
+				$("#sync_status_message").append(
+					'<div class="callout success"><ul>' +
+						'<li>' + json['total'] + ' papers fetched in total</li>' +
+						'<li>' + json['verified_and_added'] + ' papers were verified and also added.</li>' +
+						'<li>' + json['auto'] + ' papers were added but not verified (auto)</li>' +
+						'<li>' + json['no_change'] + ' papers were already noted as auto or added in database</li></ul>' +
+					'</div>'
+				);
+			},
+			error: function(xhr, error){
+        		console.debug(xhr); console.debug(error);
+				$("#sync_status_message").append(
+					'<div class="callout alert">ERROR: Syncing database failed!</div>'
+				);
+ 			}
+		})
+	});
+
 	$('.verify_button').on('click', function() {
 		var button = this;
 		var id = $(this).attr('id').split('-')[1];
