@@ -381,8 +381,10 @@ class NGIpublications {
 					ORDER BY status DESC");
 			}
 			
-			while($data=$query->fetch_assoc()) {
-				$result[]=array("status" => $data['status'], "count" => $data['count']);
+			if($query) {
+				while($data=$query->fetch_assoc()) {
+					$result[]=array("status" => $data['status'], "count" => $data['count']);
+				}
 			}
 			return $result;
 		} else {
@@ -407,9 +409,11 @@ class NGIpublications {
 					ORDER BY reservation_user,status DESC");
 			}
 			
-			while($data=$query->fetch_assoc()) {
-				$result[$data['reservation_user']]['name']=$data['reservation_user'];
-				$result[$data['reservation_user']][$data['status']]=$data['count'];
+			if($query) {
+				while($data=$query->fetch_assoc()) {
+					$result[$data['reservation_user']]['name']=$data['reservation_user'];
+					$result[$data['reservation_user']][$data['status']]=$data['count'];
+				}
 			}
 			
 			// Calculate total score (sum of verified/discarded papers)
