@@ -278,7 +278,7 @@ $test_string=$test->render();
 class zurbAccordion {
 	function __construct($multiExpand=FALSE,$allowAllClosed=FALSE) {
 		$this->parentelement=new htmlElement('ul');
-		$this->parentelement->set(array('class' => 'accordion'));
+		$this->parentelement->set('class','accordion');
 		$this->parentelement->set('data-accordion');
 		if($multiExpand) {
 			$this->parentelement->set('data-multi-expand','true');
@@ -298,6 +298,7 @@ class zurbAccordion {
 		
 		$accordion_title=new htmlElement('a');
 		$accordion_title->set('href','#');
+		$accordion_title->set('class','accordion-title');
 		$accordion_title->set('text',$title);
 		$output->inject($accordion_title);
 		

@@ -17,15 +17,6 @@ if($USER->auth>0) {
 	$filterform->addSelect("Sort","sort",array('asc' => 'Ascending', 'desc' => 'Descending'),$_GET);
 	$filterform->addInput("",array('type' => 'submit', 'name' => 'submit', 'value' => 'Filter search', 'class' => 'button'));
 	
-	/*
-	$lab_list=$researchers->listLabs();	
-	$lab_errors=$researchers->formatLabList($lab_list['errors']);
-	$all_labs=$researchers->formatLabList($lab_list['all']);
-
-	$res_list=$researchers->listResearchers();
-	$res_errors=$researchers->formatResearcherList($res_list['errors']);
-	*/
-
 	switch($_GET['order_by']) {
 		default:
 		case 'lab_name':
@@ -80,10 +71,7 @@ if($USER->auth>0) {
 	}
 	
 	$query=sql_query($query_string.$order_string);
-	
-	//$query=sql_query("SELECT * FROM labs WHERE lab_status!='disabled' ORDER BY lab_name");
 	$lab_list=$researchers->showLabList($query,$_GET['page']);
-
 } else {
 	// Not logged in
 	header('Location:login.php');
@@ -115,32 +103,11 @@ if($USER->auth>0) {
 		<?php echo $filterform->render(); ?>
 	</div>
 	<div class="large-12 columns">
-		<?php //echo $filterform->render(); ?>
-	</div>
-	<div class="large-12 columns">
 		<?php echo $lab_list['list']; ?>
 	</div>
 	<div class="large-12 columns">
 		<?php echo $lab_list['pagination']; ?>
 	</div>
-
-<!--
-	<div class="large-12 columns">
-		<h3>Errors</h3>
-	</div>
-	<div class="large-12 columns">
-		<?php echo $lab_errors; ?>
-	</div>
-	<div class="large-12 columns">
-		<?php echo $res_errors; ?>
-	</div>
-	<div class="large-12 columns">
-		<h3>Labs</h3>
-	</div>
-	<div class="large-12 columns">
-		<?php echo $all_labs; ?>
-	</div>
--->
 </div>
 
 <script src="js/vendor/jquery.js"></script>
@@ -150,4 +117,3 @@ if($USER->auth>0) {
 </body>
 
 </html>
-

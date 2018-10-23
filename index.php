@@ -108,19 +108,6 @@ if($USER->auth>0) {
 	<div class="large-12 columns">
 		<div class="card">
 			<div class="card-divider">
-				Pubtrawl status
-			</div>
-			<div class="card-section">
-			</div>
-		</div>
-	</div>
-</div>
-
-<div class="row">
-	<br>
-	<div class="large-12 columns">
-		<div class="card">
-			<div class="card-divider">
 				SciLifeLab Publication database sync status
 			</div>
 			<div class="card-section">
