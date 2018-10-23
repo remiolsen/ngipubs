@@ -6,8 +6,6 @@ if($USER->auth>0) {
 	if(isset($_POST['submit'])) {
 		if($update=$researchers->setPI($_POST['lab_id'],$_POST['lab_pi'])) {
 			header('Location:researchers.php');
-		} else {
-			echo "error";
 		}
 	} else {
 		$lab=$researchers->getLab($_GET['id']);
@@ -24,6 +22,7 @@ if($USER->auth>0) {
 		$theform->addInput(FALSE,array('name' => 'lab_id', 'type' => 'hidden', 'value' => $_GET['id']));
 		$theform->addSelect("Lab PI","lab_pi",$select, array($lab['lab']['lab_pi']));
 		$theform->addInput(FALSE,array('name' => 'submit', 'type' => 'submit', 'value' => 'Save', 'class' => 'button'));
+
 	}
 } else {
 	// Not logged in
@@ -53,6 +52,11 @@ if($USER->auth>0) {
 <div class="row">
 	<br>
 	<div class="large-12 columns">
+		<p>Assign lab PI if this has not been done automatically.</p>
+		<ul>
+			<li>If PI is not in list, please add in LIMS</li>
+			<li>If lab name or affiliation needs to be edited, please edit in LIMS</li>
+		</ul>
 		<?php echo $theform->render(); ?>
 	</div>
 </div>

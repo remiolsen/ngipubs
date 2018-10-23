@@ -187,7 +187,7 @@ class htmlElement {
 class htmlTable {
 	var $children;
 	
-	function __construct($title,$attrib=array()) {
+	function __construct($title='',$attrib=array()) {
 		$this->parentelement=new htmlElement('table');
 		$this->parentelement->set($attrib);
 		$caption=new htmlElement('caption');
@@ -199,7 +199,7 @@ class htmlTable {
 		$first_row=array_shift($data);
 		if($this->hasStringKeys($first_row)) {
 			$tablehead=new htmlElement('thead');
-			$cols=array_keys($data[0]); // Get table headers
+			$cols=array_keys($first_row); // Get table headers
 			if(is_array($cols)) {
 				$row=new htmlElement('tr');
 				foreach($cols as $key => $value) {
@@ -263,6 +263,150 @@ class htmlTable {
 	}
 }
 
+// =======================================================================================
+// Generate accordion menu HTML for Zurb Foundation 6
+// See documentation for options: https://foundation.zurb.com/sites/docs/accordion.html
+
+/*
+$test=new zurbAccordion(TRUE,TRUE);
+$test->addAccordion('Title 1','Blablabla');
+$test->addAccordion('Title 2','Hehehe',TRUE);
+$test->addAccordion('Title 3','Hahahahaha');
+$test_string=$test->render();
+*/
+
+class zurbAccordion {
+	function __construct($multiExpand=FALSE,$allowAllClosed=FALSE) {
+		$this->parentelement=new htmlElement('ul');
+		$this->parentelement->set('class','accordion');
+		$this->parentelement->set('data-accordion');
+		if($multiExpand) {
+			$this->parentelement->set('data-multi-expand','true');
+		}
+		if($allowAllClosed) {
+			$this->parentelement->set('data-allow-all-closed','true');
+		}
+	}
+	
+	public function addAccordion($title,$content,$active=FALSE) {
+		$output=new htmlElement('li');
+		$output->set('class','accordion-item');
+		if($active) {
+			$output->merge(array('class' => 'is-active'));
+		}
+		$output->set('data-accordion-item');
+		
+		$accordion_title=new htmlElement('a');
+		$accordion_title->set('href','#');
+		$accordion_title->set('class','accordion-title');
+		$accordion_title->set('text',$title);
+		$output->inject($accordion_title);
+		
+		$accordion_content=new htmlElement('div');
+		$accordion_content->set('class','accordion-content');
+		$accordion_content->set('data-tab-content');
+		$accordion_content->set('text',$content);
+		$output->inject($accordion_content);
+		
+		$this->children[]=$output;
+	}
+	
+	public function render() {
+		if(is_array($this->children)) {
+			foreach($this->children as $child) {
+				$this->parentelement->inject($child);
+			}
+		}
+
+		return $this->parentelement->output();
+	}
+}
+
+// =======================================================================================
+// Generate pagination HTML for Zurb Foundation 6
+// Inputs: current page, total pages, slots = number of pages to be shown
+
+class zurbPagination {
+	function __construct($attrib=array()) {
+		$this->parentelement=new htmlElement('nav');
+		$this->parentelement->set($attrib);
+	}
+
+	public function paginate($current,$total,$queryvars=array(),$slots=8) {
+		$prev=$current-1;
+		$next=$current+1;
+		
+		$listelement=new htmlElement('ul');
+		$listelement->set('class','pagination');
+		
+		if($current==1) {
+			$listelement->inject($this->addNav('Previous',FALSE,array('class' => 'pagination-previous disabled')));
+		} else {
+			//$listelement->inject($this->addNav('Previous','?page='.$prev,array('class' => 'pagination-previous')));
+			$listelement->inject($this->addNav('Previous',$this->updateQueryVars($prev,$queryvars),array('class' => 'pagination-previous')));
+		}
+		
+		if($total>$slots) {
+			if($current<floor($slots/2)+1 || $current>$total-floor($slots/2)) {
+				for($n=1;$n<=round($slots/2);$n++) {
+					$listelement->inject($this->checkCurrent($n,$current,$queryvars));
+				}
+				$listelement->inject($this->addNav('',FALSE,array('class' => 'ellipsis')));
+				for($n=$total-round($slots/2)+1;$n<=$total;$n++) {
+					$listelement->inject($this->checkCurrent($n,$current,$queryvars));
+				}
+			} else {
+				$listelement->inject($this->addNav('',FALSE,array('class' => 'ellipsis')));
+				for($n=$current-round($slots/2);$n<=$current+round($slots/2);$n++) {
+					$listelement->inject($this->checkCurrent($n,$current,$queryvars));
+				}
+				$listelement->inject($this->addNav('',FALSE,array('class' => 'ellipsis')));
+			}
+		} else {
+			for($n=1;$n<=$total;$n++) {
+				$listelement->inject($this->checkCurrent($n,$current,$queryvars));
+			}
+		}
+
+		if($current==$total) {
+			$listelement->inject($this->addNav('Next',FALSE,array('class' => 'pagination-next disabled')));
+		} else {
+			//$listelement->inject($this->addNav('Next','?page='.$next,array('class' => 'pagination-next')));
+			$listelement->inject($this->addNav('Next',$this->updateQueryVars($next,$queryvars),array('class' => 'pagination-next')));
+		}
+		
+		$this->parentelement->inject($listelement);
+		return $this->parentelement->output();
+	}
+	
+	private function updateQueryVars($page,$queryvars) {
+		$queryvars['page']=$page;
+		return '?'.http_build_query($queryvars);
+	}
+	
+	private function checkCurrent($n,$current,$queryvars) {
+		if($n==$current) {
+			$nav=$this->addNav($n,FALSE,array('class' => 'current'));
+		} else {
+			$nav=$this->addNav($n,$this->updateQueryVars($n,$queryvars));
+		}
+		return $nav;
+	}
+	
+	private function addNav($text,$link,$attrib=array()) {
+		$output=new htmlElement('li');
+		$output->set($attrib);
+		if($link) {
+			$linkElement=new htmlElement('a');
+			$linkElement->set('href',$link);
+			$linkElement->set('text',$text);
+			$output->inject($linkElement);
+		} else {
+			$output->set('text',$text);
+		}
+		return $output;
+	}
+}
 
 // =======================================================================================
 
@@ -365,14 +509,16 @@ class htmlList {
 }
 
 // =======================================================================================
+// columns: render form in #n columns (formatting for Zurb Foundation)
 
 class htmlForm {
 	var $children;
 	
-	function __construct($action="",$method="post",$attrib=FALSE) {
+	function __construct($action="",$method="post",$columns=1,$attrib=FALSE) {
 		$this->formelement=new htmlElement('form');
 		$this->formelement->set("action",$action);
 		$this->formelement->set("method",$method);
+		$this->columns=$columns;
 		
 		if(is_array($attrib)) {
 			$this->formelement->set($attrib);
@@ -398,8 +544,11 @@ class htmlForm {
 		$this->children[]=$output;
 	}
 
-	public function addInput($label,$attrib) {
+	public function addInput($label,$attrib=array(),$selected=FALSE) {
 		$output=new htmlElement('input');
+		if($selected) {
+			$attrib=array_merge($attrib,array("value" => $selected));
+		}
 		$output->set($attrib);
 		
 		$this->children[]=$this->labelWrap($label,$output);
@@ -462,8 +611,24 @@ class htmlForm {
 	public function render() {
 		// Add all form elements
 		if(is_array($this->children)) {
-			foreach($this->children as $child) {
-				$this->formelement->inject($child);
+			if($this->columns>1) {
+				$column_class=12/$this->columns;
+				$rows=ceil(count($this->children)/$this->columns);
+				for($row=0;$row<$rows;$row++) {
+					$container=new htmlElement('div');
+					$container->set('class','row');
+					for($col=0;$col<$this->columns;$col++) {
+						$cell=new htmlElement('div');
+						$cell->set("class","large-$column_class columns");
+						$cell->inject($this->children[$row*$this->columns+$col]);
+						$container->inject($cell);
+					}
+					$this->formelement->inject($container);
+				}
+			} else {
+				foreach($this->children as $child) {
+					$this->formelement->inject($child);
+				}
 			}
 		}
 
