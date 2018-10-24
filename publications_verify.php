@@ -7,7 +7,7 @@ if($USER->auth>0) {
 		$page=1;
 	}
 
-	$query=$publications->reservePublications($USER->data['user_email'],date('Y'),5);
+	$query=$publications->reservePublications($USER->data['user_email'],date('Y'),8);
 	$publication_list=$publications->showPublicationList($query,$page);
 } else {
 	// Not logged in
