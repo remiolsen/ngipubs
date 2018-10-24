@@ -1,16 +1,18 @@
 <?php
 require 'lib/global.php';
-$pubmed=new PHPMed();
-$researchers=new NGIresearchers();
-$publications=new NGIpublications();
 
 if($USER->auth>0) {
+	$publications=new NGIpublications();
+	if(!$page=filter_input(INPUT_GET,'page',FILTER_VALIDATE_INT)) {
+		$page=1;
+	}
 
+	$query=$publications->reservePublications($USER->data['user_email'],date('Y'),1);
+	$publication_list=$publications->showPublicationList($query,$page);
 } else {
 	// Not logged in
 	header('Location:login.php');
 }
-
 
 // Render Page
 //=================================================================================================
@@ -24,7 +26,7 @@ if($USER->auth>0) {
 	<meta http-equiv="x-ua-compatible" content="ie=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><?php echo $CONFIG['site']['name']; ?></title>
-	<link rel="stylesheet" href="css/foundation.css">
+	<link rel="stylesheet" href="css/foundation.min.css">
 	<link rel="stylesheet" href="css/app.css">
 	<link rel="stylesheet" href="css/icons/foundation-icons.css" />
 </head>
@@ -35,26 +37,16 @@ if($USER->auth>0) {
 <div class="row">
 	<br>
 	<div class="large-12 columns">
-		<div class="card">
-			<div class="card-divider">
-				Syncronize from <a href="https://publications.scilifelab.se">publications.scilifelab.se</a>
-			</div>
-			<div class="card-section large-6 columns">
-				<span class="start_sync button">Begin syncing from publications.scilifelab.se</span>
-				<p>
-					This will fetch all publications stored at <a href="https://publications.scilifelab.se">publications.scilifelab.se</a>
-					and mark each of them accordingly in this database.
-				</p>
-			</div>
-			<div class="card-section large-6 columns" id="sync_status_message">
-			</div>
-		</div>
+		<?php echo $publication_list['list']; ?>
+	</div>
+	<div class="large-12 columns">
+		<?php echo $publication_list['pagination']; ?>
 	</div>
 </div>
 
 <script src="js/vendor/jquery.js"></script>
 <script src="js/vendor/what-input.js"></script>
-<script src="js/vendor/foundation.js"></script>
+<script src="js/vendor/foundation.min.js"></script>
 <script src="js/app.js"></script>
 </body>
 

@@ -35,7 +35,7 @@ $ALERTS=new alertHandler();
 function sql_query($sql) {
 	global $DB;
 	if(!$result = $DB->query($sql)){
-	    die('There was an error running the query [' . $DB->error . '] : '.$sql);
+	    throw new Exception('There was an error running the query [' . $DB->error . '] : '.$sql);
 	} else {
 		if(is_object($result)) {
 			if($result->num_rows>0) {
