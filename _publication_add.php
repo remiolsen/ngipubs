@@ -3,7 +3,7 @@ require 'lib/global.php';
 
 global $CONFIG;
 $errors = [];
-if($USER->auth>0) {
+if($USER->auth>1) {
 	if(isset($_REQUEST['lab_id'])) {
 		$pubmed=new PHPMed();
 		$researchers=new NGIresearchers();

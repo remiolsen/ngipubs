@@ -1,7 +1,7 @@
 <?php
 require 'lib/global.php';
 $researchers=new NGIresearchers();
-if($USER->auth>0) {
+if($USER->auth>1) {
 	$labs_query=sql_query("SELECT * FROM labs WHERE lab_status='active' ORDER BY lab_name");
 	$labs=[];
 	while($lab=$labs_query->fetch_assoc()) {
