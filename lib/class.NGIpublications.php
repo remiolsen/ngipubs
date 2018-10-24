@@ -307,7 +307,7 @@ class NGIpublications {
 			return FALSE;
 		}
 	}
-	
+
 	// Reserve a list of publications for verification
 	// Each user will get a list of publications selected randomly from unverified and 'maybe'
 	// When the list has been finished a new will be generated.
@@ -322,18 +322,18 @@ class NGIpublications {
 				if(!$check=sql_fetch("SELECT * FROM publications WHERE reservation_user='$user_email' AND status IS NULL")) {
 					// Only reserve new ones if the old list is empty
 					$timestamp=time();
-					$reserve=sql_query("UPDATE publications 
-						SET 
-							reservation_user='$user_email', 
-							reservation_timestamp='$timestamp' 
-						WHERE 
-							pubdate>='$year-01-01' AND 
-							pubdate<='$year-12-31' AND 
-							score>='$score' AND 
-							(status IS NULL OR status='maybe') AND 
-							reservation_user IS NULL 
+					$reserve=sql_query("UPDATE publications
+						SET
+							reservation_user='$user_email',
+							reservation_timestamp='$timestamp'
+						WHERE
+							pubdate>='$year-01-01' AND
+							pubdate<='$year-12-31' AND
+							score>='$score' AND
+							(status IS NULL OR status='maybe') AND
+							reservation_user IS NULL
 						ORDER BY RAND() LIMIT $limit");
-					
+
 					// Update log on the reserved papers
 					if($updated=sql_query("SELECT * FROM publications WHERE reservation_user='$user_email' AND reservation_timestamp=$timestamp")) {
 						while($publication=$updated->fetch_assoc()) {
@@ -342,7 +342,7 @@ class NGIpublications {
 						}
 					}
 				}
-				
+
 				// Fetch all reserved un-verified and 'maybe' papers
 				if($query=sql_query("SELECT * FROM publications WHERE reservation_user='$user_email' AND (status IS NULL OR status='maybe')")) {
 					return $query;
@@ -356,31 +356,31 @@ class NGIpublications {
 			return FALSE;
 		}
 	}
-	
+
 	// Summarize verified publications
 	public function getScoreboard($year=FALSE,$user=FALSE) {
 		$result=array();
 		if($user=filter_var($user,FILTER_VALIDATE_EMAIL)) {
 			if($year=filter_var($year,FILTER_VALIDATE_INT)) {
 				// Get user score for specified year
-				$query=sql_query("SELECT status,COUNT(*) AS count FROM publications 
-					WHERE 
-						(status='verified' OR status='discarded') AND 
-						pubdate>='$year-01-01' AND 
-						pubdate<='$year-12-31' AND 
-						reservation_user='$user' 
-					GROUP BY status 
+				$query=sql_query("SELECT status,COUNT(*) AS count FROM publications
+					WHERE
+						(status='verified' OR status='discarded') AND
+						pubdate>='$year-01-01' AND
+						pubdate<='$year-12-31' AND
+						reservation_user='$user'
+					GROUP BY status
 					ORDER BY status DESC");
 			} else {
 				// Get total user score
-				$query=sql_query("SELECT status,COUNT(*) AS count FROM publications 
-					WHERE 
-						(status='verified' OR status='discarded') AND 
-						reservation_user='$user' 
-					GROUP BY status 
+				$query=sql_query("SELECT status,COUNT(*) AS count FROM publications
+					WHERE
+						(status='verified' OR status='discarded') AND
+						reservation_user='$user'
+					GROUP BY status
 					ORDER BY status DESC");
 			}
-			
+
 			if($query) {
 				while($data=$query->fetch_assoc()) {
 					$result[]=array("status" => $data['status'], "count" => $data['count']);
@@ -391,46 +391,46 @@ class NGIpublications {
 			// Get global scoreboard
 			if($year=filter_var($year,FILTER_VALIDATE_INT)) {
 				// Get user score for specified year
-				$query=sql_query("SELECT reservation_user,status,COUNT(*) AS count FROM publications 
-					WHERE 
-						(status='verified' OR status='discarded') AND 
-						pubdate>='$year-01-01' AND 
-						pubdate<='$year-12-31' AND 
-						reservation_user IS NOT NULL 
-					GROUP BY reservation_user,status 
+				$query=sql_query("SELECT reservation_user,status,COUNT(*) AS count FROM publications
+					WHERE
+						(status='verified' OR status='discarded') AND
+						pubdate>='$year-01-01' AND
+						pubdate<='$year-12-31' AND
+						reservation_user IS NOT NULL
+					GROUP BY reservation_user,status
 					ORDER BY reservation_user,status DESC");
 			} else {
 				// Get total user score
-				$query=sql_query("SELECT reservation_user,status,COUNT(*) AS count FROM publications 
-					WHERE 
-						(status='verified' OR status='discarded') AND 
-						reservation_user IS NOT NULL 
-					GROUP BY reservation_user,status 
+				$query=sql_query("SELECT reservation_user,status,COUNT(*) AS count FROM publications
+					WHERE
+						(status='verified' OR status='discarded') AND
+						reservation_user IS NOT NULL
+					GROUP BY reservation_user,status
 					ORDER BY reservation_user,status DESC");
 			}
-			
+
 			if($query) {
 				while($data=$query->fetch_assoc()) {
 					$result[$data['reservation_user']]['name']=$data['reservation_user'];
 					$result[$data['reservation_user']][$data['status']]=$data['count'];
 				}
 			}
-			
+
 			// Calculate total score (sum of verified/discarded papers)
 			foreach($result as $key => $row) {
 				$order[$key]=array_sum($row);
 			}
 			arsort($order);
-			
+
 			// Format output
 			foreach($order as $key => $score) {
 				$final[]=array('name' => $result[$key]['name'], 'verified' => $result[$key]['verified'], 'discarded' => $result[$key]['discarded'], 'total' => $score);
 			}
-					
+
 			return $final;
 		}
 	}
-		
+
 	public function showPublicationList($sql,$page,$limit=10) {
 		$output='';
 		$pagination_string='';
@@ -445,7 +445,7 @@ class NGIpublications {
 			if($page>0 && $page<=$pages) {
 				$pagination=new zurbPagination();
 				$pagination_string=$pagination->paginate($page,$pages,$_GET);
-				
+
 				$n=1;
 				while($publication=$sql->fetch_assoc()) {
 					if($n>=$show_first && $n<=$show_last) {
@@ -459,7 +459,7 @@ class NGIpublications {
 		} else {
 			$output='No records found';
 		}
-		
+
 		return array('list' => $output, 'pagination' => $pagination_string);
 	}
 
@@ -495,11 +495,11 @@ class NGIpublications {
 
 		return array('data' => $publication, 'authors' => $author_data, 'researchers' => $researcher_list, 'matches' => $matches, 'fulltext' => $ptext);
 	}
-	
+
 	// Format and display details of a publication from the database
 	public function formatPublication($publication) {
 		$publication=$this->publicationData($publication);
-		
+
 		$container=new htmlElement('div');
 		$container->set('id','publ-'.$publication['data']['id']);
 
@@ -546,7 +546,7 @@ class NGIpublications {
 			foreach($keyword_array as $keyword) {
 				$keyword_string.='<span class="label secondary">'.$keyword.'</span> ';
 			}
-			
+
 			// Set up containers
 			$row=new htmlElement('div');
 			$row->set('class','row');
@@ -563,7 +563,7 @@ class NGIpublications {
 
 			$ref=new htmlElement('p');
 			$ref->set('text',$publication['authors'][0].' et. al. '.date('Y',strtotime($publication['data']['pubdate'])).', '.$publication['data']['journal'].', '.$reference);
-			
+
 			$authors=new htmlElement('p');
 			$authors->set('text',implode(', ', $publication['authors']).'<br>');
 
@@ -572,9 +572,14 @@ class NGIpublications {
 
 			$researchers=new htmlElement('p');
 			$researchers->set('text','Matched authors: '.$researcher_string.'<br>Matched keywords in abstract: '.$keyword_string);
-			
+
 			// Fulltext keyword matches
 			$fulltext = new htmlElement('div');
+			// TODO: fix this ugliness
+			if($matches = json_decode($publication['fulltext']['text'])) {}
+			else {
+				$matches = json_decode(utf8_decode($publication['fulltext']['text']));
+			}
 			$matches = json_decode($publication['fulltext']['text']);
 			$amatches = [];
 			foreach($matches as $match) {
@@ -591,13 +596,13 @@ class NGIpublications {
 			} else {
 				$fulltext->set('text','<strong>No matches in fulltext</strong>');
 			}
-			
+
 			$detailed_content=new htmlElement('div');
 			$detailed_content->inject($researchers);
 			$detailed_content->inject($authors);
 			$detailed_content->inject($abstract);
 			$detailed_content->inject($fulltext);
-			
+
 			$accordion=new zurbAccordion(TRUE,TRUE);
 			$accordion->addAccordion('Details',$detailed_content->output());
 
