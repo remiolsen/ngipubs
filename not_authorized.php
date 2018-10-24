@@ -1,11 +1,9 @@
 <?php
 require 'lib/global.php';
 
-if($USER->auth>1) {
-
-} else {
-	// Not authorized
-	header('Location:not_authorized.php');
+if($USER->auth==0) {
+	// Not logged in
+	header('Location:login.php');
 }
 
 // Render Page
@@ -28,30 +26,16 @@ if($USER->auth>1) {
 <body>
 <?php require '_menu.php'; ?>
 
+
 <div class="row">
 	<br>
 	<div class="large-12 columns">
 		<div class="card">
 			<div class="card-divider">
-				Pubtrawl status
+				"I'm sorry Dave, I'm afraid I can't do that"
 			</div>
-
 			<div class="card-section">
-				<div class="button-group">
-					<span class="start_trawl button">Begin trawl</span>
-					<span class="pause_trawl warning button">Pause trawl</span>
-				</div>
-			</div>
-
-			<div class="card-section">
-				<div class="large-12 columns" id="trawlmeter">
-					<div class="progress" role="progressbar" tabindex="0" aria-valuenow="0" aria-valuemin="0" aria-valuemax="0">
-						<span id="trawlbar" class="progress-meter" style="width: 0%">
-					    <p id="trawltext" class="progress-meter-text"></p>
-					  </span>
-					</div>
-				</div>
-				<div id="trawl_labs" class="large-12 columns"></div>
+				Not Authorized to access this site. Please contact your site administrator.
 			</div>
 		</div>
 	</div>
