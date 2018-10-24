@@ -194,12 +194,12 @@ class NGIresearchers {
 				if($lab_affiliation!=$found['lab_affiliation'] || $lab_name!=$found['lab_name']) {
 					// Check if something has changed
 					$log=$this->addLog('Updated lab from sync with Clarity API','Update',$found['log']);
-					$result=sql_query("UPDATE labs SET 
-						lab_name='$lab_name', 
-						lab_affiliation='$lab_affiliation', 
-						log='$log' 
+					$result=sql_query("UPDATE labs SET
+						lab_name='$lab_name',
+						lab_affiliation='$lab_affiliation',
+						log='$log'
 						WHERE lab_clarity_uri='$lab_uri'");
-					
+
 					// Check/update errors
 					$this->checkLabErrors($lab_uri,$found['lab_status']);
 					return TRUE;
@@ -209,13 +209,13 @@ class NGIresearchers {
 			} else {
 				// Lab doesn't exist in db, add it
 				$log=$this->addLog('Added lab from sync with Clarity API','Add');
-				$result=sql_query("INSERT INTO labs SET 
-					lab_name='$lab_name', 
-					lab_status='active', 
-					lab_affiliation='$lab_affiliation', 
-					lab_clarity_uri='$lab_uri', 
+				$result=sql_query("INSERT INTO labs SET
+					lab_name='$lab_name',
+					lab_status='active',
+					lab_affiliation='$lab_affiliation',
+					lab_clarity_uri='$lab_uri',
 					log='$log'");
-				
+
 				// Check/update errors
 				$this->checkLabErrors($lab_uri,NULL);
 				return TRUE;
@@ -224,7 +224,7 @@ class NGIresearchers {
 			return FALSE;
 		}
 	}
-	
+
 	// Check lab for errors and update status accordingly
 	private function checkLabErrors($lab_clarity_uri,$current_status) {
 		if($lab_clarity_uri=filter_var($lab_clarity_uri,FILTER_VALIDATE_URL)) {
@@ -233,8 +233,8 @@ class NGIresearchers {
 				// Lab already existed and had an error in it, check if this has been corrected
 				if(!$lab_data['errors']) {
 					// No errors, update DB
-					$result=sql_query("UPDATE labs SET 
-						lab_status='active' 
+					$result=sql_query("UPDATE labs SET
+						lab_status='active'
 						WHERE lab_clarity_uri='$lab_clarity_uri'");
 				}
 			} elseif($current_status!='disabled') {
@@ -243,13 +243,13 @@ class NGIresearchers {
 				if($lab_data['errors']) {
 					// We found errors, update DB
 					$log=$this->addLog("Errors found! ".implode(', ', $lab_data['errors']),"Error",$lab_data['lab']['log']);
-					$result=sql_query("UPDATE labs SET 
-						lab_status='error', 
+					$result=sql_query("UPDATE labs SET
+						lab_status='error',
 						log='$log'
 						WHERE lab_clarity_uri='$lab_clarity_uri'");
 				}
 			}
-			
+
 			return TRUE;
 		} else {
 			return FALSE;
@@ -301,16 +301,16 @@ class NGIresearchers {
 				if(array_key_exists($pi_email, $lab['query']['terms']['all'])) {
 					$log=$this->addLog('Manual update of lab PI: '.$pi_email,'Update',$lab['lab']['log']);
 					$update=sql_query("UPDATE labs SET lab_pi='$pi_email', log='$log' WHERE lab_clarity_uri='".$lab['lab']['lab_clarity_uri']."'");
-					
+
 					// Check/update errors
 					$this->checkLabErrors($lab_uri,$lab['lab']['lab_status']);
-					
+
 					return $pi_email;
 				} else {
 					return FALSE;
 				}
 			} else {
-				// Automatic update onöy if PI field is empty
+				// Automatic update only if PI field is empty
 				if($lab['lab']['lab_pi']=='') {
 					foreach($lab['group_data'] as $researcher) {
 						$fname=$this->normalize(trim($researcher['first_name']));
@@ -343,7 +343,7 @@ class NGIresearchers {
 			if(!$affiliation=sql_fetch("SELECT * FROM affiliations WHERE id='$lab_affiliation'")) {
 				$errors[]='Affiliation missing!';
 			}
-			
+
 			if($lab_clarity_uri=filter_var($lab['lab_clarity_uri'],FILTER_VALIDATE_URL)) {
 				$group_query=sql_query("SELECT researchers.email,researchers.last_name,researchers.first_name,researchers.query_name FROM groups LEFT JOIN researchers ON groups.email=researchers.email WHERE groups.clarity_lab_uri='$lab_clarity_uri'");
 				if($group_query) {
@@ -353,7 +353,7 @@ class NGIresearchers {
 					} else {
 						$errors[]='No PI set';
 					}
-		
+
 					while($researcher=$group_query->fetch_assoc()) {
 						if($researcher['email']!=$pi['email']) {
 							$terms['collaborators'][]=$this->pmName($researcher);
@@ -361,18 +361,18 @@ class NGIresearchers {
 						$group_data[$researcher['email']]=$researcher; // Added email as key on 2017-11-27... Shouldn't break anything...
 						$terms['all'][$researcher['email']]=$this->pmName($researcher);
 					}
-		
+
 					if(array_key_exists('pi', $terms)) {
 						if($affiliation) {
 							$terms['affiliation']=explode(',', $affiliation['search']);
 						}
-						
+
 						if(count($terms['affiliation'])>0) {
 							$querystring['pi']=$terms['pi'].' AND '.$this->pmAffiliation($terms['affiliation']);
 						} else {
 							$querystring['pi']=$terms['pi'];
 						}
-						
+
 						if(count($terms['collaborators'])>0) {
 							$querystring['all_authors']=$terms['pi'].' AND ('.implode(' OR ', $terms['collaborators']).')';
 						}
@@ -401,7 +401,7 @@ class NGIresearchers {
 
 		return array('lab' => $lab, 'affiliation' => $affiliation, 'group_data' => $group_data, 'query' => array('terms' => $terms, 'query_string' => $querystring), 'errors' => $errors);
 	}
-	
+
 	// Get lab data from SQL database, query using either Clarity URL, Clarity ID or lab name
 	public function getLab($query) {
 		global $DB;
@@ -456,7 +456,7 @@ class NGIresearchers {
 
 		return array('data' => $researcher, 'lab_data' => $lab_data, 'publications' => $paper_list, 'errors' => $errors);
 	}
-	
+
 	public function showLabList($sql,$page,$limit=10) {
 		$output='';
 		$pagination_string='';
@@ -471,7 +471,7 @@ class NGIresearchers {
 			if($page>0 && $page<=$pages) {
 				$pagination=new zurbPagination();
 				$pagination_string=$pagination->paginate($page,$pages,$_GET);
-				
+
 				$n=1;
 				while($lab=$sql->fetch_assoc()) {
 					if($n>=$show_first && $n<=$show_last) {
@@ -485,7 +485,7 @@ class NGIresearchers {
 		} else {
 			$output='No records found';
 		}
-		
+
 		return array('list' => $output, 'pagination' => $pagination_string);
 	}
 
@@ -546,10 +546,10 @@ class NGIresearchers {
 		}
 		return $output;
 	}
-	
+
 	public function formatLab($lab_data) {
 		$lab_data=$this->labData($lab_data);
-		
+
 		$groupmembers=array();
 		$affiliation='';
 		$error_list=array();
@@ -572,7 +572,7 @@ class NGIresearchers {
 		} else {
 			$groupmembers[]='No members, add lab members in LIMS and sync again';
 		}
-		
+
 		$error_string=new htmlElement('span');
 		if($lab_data['errors']) {
 			$container_class='alert';
@@ -586,7 +586,7 @@ class NGIresearchers {
 		}
 
 		$lims_id=$this->getClarityID($lab_data['lab']['lab_clarity_uri']);
-		
+
 		$tools=new htmlElement('p');
 		$publications=new htmlElement('span');
 		$publications->set('class','small button find_pub');
@@ -600,9 +600,9 @@ class NGIresearchers {
 		$edit_lab->set('href','lab_edit.php?id='.$lims_id);
 		$edit_lab->set('text','Edit lab');
 		$tools->inject($edit_lab);
-		
+
 		$limiter=new htmlElement('hr');
-		
+
 		$container=new htmlElement('div');
 		$container->set('class',"callout $container_class");
 		$title=new htmlElement('strong');

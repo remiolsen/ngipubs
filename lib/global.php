@@ -18,6 +18,7 @@ require 'class.NGIportal.php';
 
 //Connect to database
 $DB=new mysqli("p:".$CONFIG['mysql']['server'],$CONFIG['mysql']['user'],$CONFIG['mysql']['pass'],$CONFIG['mysql']['db']);
+$DB->set_charset("utf8");
 if($DB->connect_errno>0){
     die('Unable to connect to database [' . $DB->connect_error . ']');
 }
