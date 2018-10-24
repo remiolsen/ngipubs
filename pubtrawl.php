@@ -1,11 +1,11 @@
 <?php
 require 'lib/global.php';
 
-if($USER->auth>0) {
+if($USER->auth>1) {
 
 } else {
-	// Not logged in
-	header('Location:login.php');
+	// Not authorized
+	header('Location:not_authorized.php');
 }
 
 // Render Page

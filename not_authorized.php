@@ -1,15 +1,7 @@
 <?php
 require 'lib/global.php';
 
-if($USER->auth>0) {
-	$publications=new NGIpublications();
-	if(!$page=filter_input(INPUT_GET,'page',FILTER_VALIDATE_INT)) {
-		$page=1;
-	}
-
-	$query=$publications->reservePublications($USER->data['user_email'],date('Y'),8);
-	$publication_list=$publications->showPublicationList($query,$page);
-} else {
+if($USER->auth==0) {
 	// Not logged in
 	header('Location:login.php');
 }
@@ -26,7 +18,7 @@ if($USER->auth>0) {
 	<meta http-equiv="x-ua-compatible" content="ie=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><?php echo $CONFIG['site']['name']; ?></title>
-	<link rel="stylesheet" href="css/foundation.min.css">
+	<link rel="stylesheet" href="css/foundation.css">
 	<link rel="stylesheet" href="css/app.css">
 	<link rel="stylesheet" href="css/icons/foundation-icons.css" />
 </head>
@@ -34,19 +26,24 @@ if($USER->auth>0) {
 <body>
 <?php require '_menu.php'; ?>
 
+
 <div class="row">
 	<br>
 	<div class="large-12 columns">
-		<?php echo $publication_list['list']; ?>
-	</div>
-	<div class="large-12 columns">
-		<?php echo $publication_list['pagination']; ?>
+		<div class="card">
+			<div class="card-divider">
+				"I'm sorry Dave, I'm afraid I can't do that"
+			</div>
+			<div class="card-section">
+				Not Authorized to access this site. Please contact your site administrator.
+			</div>
+		</div>
 	</div>
 </div>
 
 <script src="js/vendor/jquery.js"></script>
 <script src="js/vendor/what-input.js"></script>
-<script src="js/vendor/foundation.min.js"></script>
+<script src="js/vendor/foundation.js"></script>
 <script src="js/app.js"></script>
 </body>
 
