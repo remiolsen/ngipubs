@@ -1,8 +1,9 @@
 $(document).foundation();
 
+
 $(document).ready(function() {
 	updateStatus();
-	
+
 	// Sync with Clarity LIMS
 	$("#load_clarity").on("click", function() {
 		$(this).prop("disabled",true).text("Working...");
@@ -54,7 +55,7 @@ $(document).ready(function() {
 			}
 		});
 	}
-	
+
 	// Find publications for single lab
 	$('.find_pub').on('click', function() {
 		var button = this;
@@ -118,6 +119,36 @@ $(document).ready(function() {
 	     };
 	}());
 
+	if($('.start_trawl').length) {
+		items = "";
+		if (sessionStorage.trawl_list) {
+			items = JSON.parse(sessionStorage.trawl_list);
+		}
+		else {
+			$.ajax({
+				url: "_publication_batch_add.php",
+				async: false,
+				success: function(json) {
+					items = json;
+				}
+			});
+			sessionStorage.setItem("trawl_list", items);
+			items = JSON.parse(items);
+		}
+		$.each(items, function( id, lab ) {
+			var text = "Pending";
+			var label = "";
+			if(lab['session'] == 'done') {
+				text = "Done"; label = "success";
+			}
+			if(lab['session'] == 'error') {
+				text = "Error"; label = "alert";
+			}
+			var out='<span class="secondary label '+label+'" id="status-'+id+'">'+text+'</span> <span id="lab-'+id+'">'+lab['lab_name']+': </span><span id="result-'+id+'"></span><br>';
+			$('#trawl_labs').append(out);
+		});
+	};
+
 	$(function() {
 		$('.start_trawl').on('click', function() {
 				ajaxManager.run();
@@ -168,37 +199,8 @@ $(document).ready(function() {
 		$('.pause_trawl').on('click', function() {
 			ajaxManager.stop()
 		});
-
-		items = "";
-		if (sessionStorage.trawl_list) {
-			items = JSON.parse(sessionStorage.trawl_list);
-		}
-		else {
-			$.ajax({
-				url: "_publication_batch_add.php",
-				async: false,
-				success: function(json) {
-					items = json;
-				}
-			});
-			//items = JSON.parse(req.responseText);
-			sessionStorage.setItem("trawl_list", items);
-			items = JSON.parse(items);
-		}
-		$.each(items, function( id, lab ) {
-			var text = "Pending";
-			var label = "";
-			if(lab['session'] == 'done') {
-				text = "Done"; label = "success";
-			}
-			if(lab['session'] == 'error') {
-				text = "Error"; label = "alert";
-			}
-			var out='<span class="secondary label '+label+'" id="status-'+id+'">'+text+'</span> <span id="lab-'+id+'">'+lab['lab_name']+': </span><span id="result-'+id+'"></span><br>';
-			$('#trawl_labs').append(out);
-		});
 	});
-	
+
 	// Syncing with SciLifeLab publication database
 	$('.start_sync').on('click', function() {
 		$.ajax({
@@ -243,7 +245,7 @@ $(document).ready(function() {
  			}
 		})
 	});
-	
+
 	// Verifying publications
 	$('.verify_button').on('click', function() {
 		var button = this;

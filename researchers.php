@@ -15,7 +15,7 @@ if($USER->auth>0) {
 	$filterform->addSelect("Affiliation","lab_affiliation",$affiliation_select,$_GET);
 	$filterform->addSelect("Order by","order_by",array('lab_name' => 'Lab name', 'lab_affiliation' => 'Affiliation'),$_GET);
 	$filterform->addSelect("Sort","sort",array('asc' => 'Ascending', 'desc' => 'Descending'),$_GET);
-	$filterform->addInput("",array('type' => 'submit', 'name' => 'submit', 'value' => 'Filter search', 'class' => 'button'));
+	$filterform->addInput("<br/>",array('type' => 'submit', 'name' => 'submit', 'value' => 'Filter search', 'class' => 'button'));
 
 	switch($_GET['order_by']) {
 		default:

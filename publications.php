@@ -14,7 +14,7 @@ if($USER->auth>0) {
 	$filterform->addSelect("Year","year",$years_select,$_GET);
 	$filterform->addSelect("Order by","order_by",array('score' => 'Score', 'pubdate' => 'Publication date'),$_GET);
 	$filterform->addSelect("Sort","sort",array('desc' => 'Descending', 'asc' => 'Ascending'),$_GET);
-	$filterform->addInput("",array('type' => 'submit', 'name' => 'submit', 'value' => 'Filter search', 'class' => 'button'));
+	$filterform->addInput("<br/>",array('type' => 'submit', 'name' => 'submit', 'value' => 'Filter search', 'class' => 'button'));
 
 	switch($_GET['order_by']) {
 		default:

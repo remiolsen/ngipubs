@@ -580,7 +580,6 @@ class NGIpublications {
 			else {
 				$matches = json_decode(utf8_decode($publication['fulltext']['text']));
 			}
-			$matches = json_decode($publication['fulltext']['text']);
 			$amatches = [];
 			foreach($matches as $match) {
 				$amatches[$match[0]][] = $match[1];
