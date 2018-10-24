@@ -10,12 +10,12 @@ if($USER->auth>0) {
 		$affiliation_select[$affiliation['id']]=$affiliation['name'];
 	}
 
-	$filterform=new htmlForm("researchers.php","get",4);
+	$filterform=new htmlForm("researchers.php","get",5);
 	$filterform->addSelect("Status","lab_status",array('all' => 'All', 'active' => 'Active labs', 'error' => 'Contains errors', 'disabled' => 'Disabled'),$_GET);
 	$filterform->addSelect("Affiliation","lab_affiliation",$affiliation_select,$_GET);
 	$filterform->addSelect("Order by","order_by",array('lab_name' => 'Lab name', 'lab_affiliation' => 'Affiliation'),$_GET);
 	$filterform->addSelect("Sort","sort",array('asc' => 'Ascending', 'desc' => 'Descending'),$_GET);
-	$filterform->addInput("",array('type' => 'submit', 'name' => 'submit', 'value' => 'Filter search', 'class' => 'button'));
+	$filterform->addInput("<br/>",array('type' => 'submit', 'name' => 'submit', 'value' => 'Filter search', 'class' => 'button'));
 
 	switch($_GET['order_by']) {
 		default:
