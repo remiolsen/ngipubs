@@ -9,7 +9,7 @@ if($USER->auth>0) {
 	$years_select[0]="All";
 	asort($years_select);
 
-	$filterform=new htmlForm("publications.php","get",4);
+	$filterform=new htmlForm("publications.php","get",5);
 	$filterform->addSelect("Status","status",array('all' => 'All', 'verified' => 'Verified', 'discarded' => 'Discarded', 'maybe' => 'Maybe', 'auto' => 'Auto'),$_GET);
 	$filterform->addSelect("Year","year",$years_select,$_GET);
 	$filterform->addSelect("Order by","order_by",array('score' => 'Score', 'pubdate' => 'Publication date'),$_GET);
@@ -37,7 +37,7 @@ if($USER->auth>0) {
 			$order_string.=" ASC";
 		break;
 	}
-	
+
 	switch($_GET['status']) {
 		default:
 		case 'all':
@@ -64,17 +64,17 @@ if($USER->auth>0) {
 			$filters[]="status IS NULL";
 		break;
 	}
-	
+
 	if($year=filter_input(INPUT_GET,'year',FILTER_VALIDATE_INT,array('min_range' => 2000,'max_range' => 2100))) {
 		$filters[]="pubdate>='$year-01-01' AND pubdate<='$year-12-31'";
 	}
-	
+
 	$query_string="SELECT * FROM publications";
-	
+
 	if(count($filters)>0) {
 		$query_string.=' WHERE '.implode(' AND ',$filters);
 	}
-	
+
 	$query=sql_query($query_string.$order_string);
 
 	$publication_list=$publications->showPublicationList($query,$_GET['page']);

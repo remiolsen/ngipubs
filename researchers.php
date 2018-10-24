@@ -3,20 +3,20 @@ require 'lib/global.php';
 
 if($USER->auth>0) {
 	$researchers=new NGIresearchers();
-	
+
 	$affiliation_select[0]="All";
 	$affiliations=sql_query("SELECT id,name FROM affiliations ORDER BY name");
 	while($affiliation=$affiliations->fetch_assoc()) {
 		$affiliation_select[$affiliation['id']]=$affiliation['name'];
 	}
 
-	$filterform=new htmlForm("researchers.php","get",4);
+	$filterform=new htmlForm("researchers.php","get",5);
 	$filterform->addSelect("Status","lab_status",array('all' => 'All', 'active' => 'Active labs', 'error' => 'Contains errors', 'disabled' => 'Disabled'),$_GET);
 	$filterform->addSelect("Affiliation","lab_affiliation",$affiliation_select,$_GET);
 	$filterform->addSelect("Order by","order_by",array('lab_name' => 'Lab name', 'lab_affiliation' => 'Affiliation'),$_GET);
 	$filterform->addSelect("Sort","sort",array('asc' => 'Ascending', 'desc' => 'Descending'),$_GET);
 	$filterform->addInput("",array('type' => 'submit', 'name' => 'submit', 'value' => 'Filter search', 'class' => 'button'));
-	
+
 	switch($_GET['order_by']) {
 		default:
 		case 'lab_name':
@@ -38,7 +38,7 @@ if($USER->auth>0) {
 			$order_string.=" DESC";
 		break;
 	}
-	
+
 	switch($_GET['lab_status']) {
 		default:
 		case 'all':
@@ -57,19 +57,19 @@ if($USER->auth>0) {
 			$filters[]="lab_status='disabled'";
 		break;
 	}
-	
+
 	// Only add if value exists in Affiliation table
 	$lab_affiliation=filter_var($_GET['lab_affiliation'],FILTER_SANITIZE_MAGIC_QUOTES);
 	if(array_key_exists($lab_affiliation, $affiliation_select) && $lab_affiliation!='0') {
 		$filters[]="lab_affiliation='$lab_affiliation'";
 	}
-	
+
 	$query_string="SELECT * FROM labs";
-	
+
 	if(count($filters)>0) {
 		$query_string.=' WHERE '.implode(' AND ',$filters);
 	}
-	
+
 	$query=sql_query($query_string.$order_string);
 	$lab_list=$researchers->showLabList($query,$_GET['page']);
 } else {
