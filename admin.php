@@ -1,22 +1,7 @@
 <?php
 require 'lib/global.php';
 
-if($USER->auth>1) {
-	$publications=new NGIpublications();
-	$year=$CONFIG['publications']['current_year'];
-
-	$user_score=$publications->getScoreboard($year,$USER->data['user_email']);
-	$user_score_table=new htmlTable();
-	$user_score_table->addData($user_score);
-
-	$user_score_total=$publications->getScoreboard(FALSE,$USER->data['user_email']);
-	$user_score_total_table=new htmlTable();
-	$user_score_total_table->addData($user_score_total);
-
-	$score_total=$publications->getScoreboard(FALSE,FALSE);
-	$score_total_table=new htmlTable();
-	$score_total_table->addData($score_total);
-} else {
+if($USER->auth<2) {
 	// Not authorized
 	header('Location:not_authorized.php');
 }
