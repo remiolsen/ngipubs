@@ -65,6 +65,10 @@ if($USER->auth>0) {
 		break;
 	}
 
+	if($_GET['id']) {
+		$filters[]="id=".$_GET['id'];
+	}
+
 	if($year=filter_input(INPUT_GET,'year',FILTER_VALIDATE_INT,array('min_range' => 2000,'max_range' => 2100))) {
 		$filters[]="pubdate>='$year-01-01' AND pubdate<='$year-12-31'";
 	}
