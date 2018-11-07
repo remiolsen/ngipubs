@@ -65,8 +65,10 @@ if($USER->auth>0) {
 		break;
 	}
 
-	if($_GET['id']) {
+	if ($_GET['id']) {
 		$filters[]="id=".$_GET['id'];
+	} elseif ($_GET['pubmedid']) {
+		$filters[]="pmid=".$_GET['pubmedid'];
 	}
 
 	if($year=filter_input(INPUT_GET,'year',FILTER_VALIDATE_INT,array('min_range' => 2000,'max_range' => 2100))) {
