@@ -9,12 +9,14 @@ if($USER->auth>0) {
 	$years_select[0]="All";
 	asort($years_select);
 
-	$filterform=new htmlForm("publications.php","get",5);
+	$filterform=new htmlForm("publications.php","get",6);
 	$filterform->addSelect("Status","status",array('all' => 'All', 'verified' => 'Verified', 'discarded' => 'Discarded', 'maybe' => 'Maybe', 'auto' => 'Auto', 'pending' => 'Pending'),$_GET);
 	$filterform->addSelect("Year","year",$years_select,$_GET);
 	$filterform->addSelect("Order by","order_by",array('score' => 'Score', 'pubdate' => 'Publication date'),$_GET);
 	$filterform->addSelect("Sort","sort",array('desc' => 'Descending', 'asc' => 'Ascending'),$_GET);
-	$filterform->addInput("<br/>",array('type' => 'submit', 'name' => 'submit', 'value' => 'Filter search', 'class' => 'button'));
+	$filterform->addInput("Pubmed ID",array('type' => 'search', 'name' => 'pubmedid'), $_GET);
+	$filterform->addInput("Title search", array('type' => 'search', 'name' => 'title_search'), $_GET);
+	$filterform->addInput("<br/>",array('type' => 'submit', 'name' => 'submit', 'value' => 'Apply Filter', 'class' => 'button'));
 
 	switch($_GET['order_by']) {
 		default:
@@ -75,13 +77,18 @@ if($USER->auth>0) {
 		$filters[]="pubdate>='$year-01-01' AND pubdate<='$year-12-31'";
 	}
 
-	$query_string="SELECT * FROM publications";
+	$query_string="SELECT * FROM publications ";
 
-	if(count($filters)>0) {
-		$query_string.=' WHERE '.implode(' AND ',$filters);
+	if (!$_GET['title_search']) {
+		if(count($filters)>0) {
+			$query_string.=' WHERE '.implode(' AND ', $filters);
+		}
+		$query=sql_query($query_string.$order_string);
+	} else {
+		$search_string = $_GET['title_search'];
+		$query_string.=" WHERE title LIKE '%".$search_string."%'";
+		$query=sql_query($query_string);
 	}
-
-	$query=sql_query($query_string.$order_string);
 
 	$publication_list=$publications->showPublicationList($query,$_GET['page']);
 } else {
