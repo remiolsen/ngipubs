@@ -489,8 +489,41 @@ class NGIresearchers {
 		return array('list' => $output, 'pagination' => $pagination_string);
 	}
 
-	public function listResearchers() {
-		$researchers=sql_query("SELECT * FROM researchers");
+	public function showResearcherList($sql,$page,$limit=10) {
+		$output='';
+		$pagination_string='';
+		if(!$page=filter_var($page,FILTER_VALIDATE_INT)) {
+			$page=1;
+		}
+		$total=$sql->num_rows;
+		if($total>0) {
+			$pages=ceil($total/$limit);
+			$show_first=($page-1)*$limit+1;
+			$show_last=$page*$limit;
+			if($page>0 && $page<=$pages) {
+				$pagination=new zurbPagination();
+				$pagination_string=$pagination->paginate($page,$pages,$_GET);
+
+				$n=1;
+				while($researcher=$sql->fetch_assoc()) {
+					if($n>=$show_first && $n<=$show_last) {
+						$researcher_data=$this->getResearcher($researcher['email']);
+						$output.=$this->formatResearcher($researcher_data, $researcher['email']);
+					}
+					$n++;
+				}
+			} else {
+				$output='ERROR: page out of range';
+			}
+		} else {
+			$output='No records found';
+		}
+
+		return array('list' => $output, 'pagination' => $pagination_string);
+	}
+
+	public function listResearchers($researchers) {
+		/* $researchers=sql_query("SELECT * FROM researchers"); */
 		while($researcher=$researchers->fetch_assoc()) {
 			$researcher_data=$this->getResearcher($researcher['email']);
 			$researcher_list['all'][$researcher['email']]=$researcher_data;
@@ -501,49 +534,49 @@ class NGIresearchers {
 		return $researcher_list;
 	}
 
-	public function formatResearcherList($researcher_list) {
-		foreach($researcher_list as $email => $researcher) {
-			$labs=array();
-			$error_list=array();
+	public function formatResearcher($researcher, $email) {
+		$email=$researcher->email;
 
-			$container=new htmlElement('div');
+		$labs=array();
+		$error_list=array();
 
-			$error_string=new htmlElement('p');
-			if(count($researcher['errors'])>0) {
-				$container_class='alert';
-				foreach($researcher['errors'] as $error) {
-					$error_list[]='<span class="label warning">'.$error.'</span>';
-				}
-				$error_string->set('text', implode(' ', $error_list));
-			} else {
-				$container_class='primary';
-				$error_string='';
+		$container=new htmlElement('div');
+
+		$error_string=new htmlElement('p');
+		if(count($researcher['errors'])>0) {
+			$container_class='alert';
+			foreach($researcher['errors'] as $error) {
+				$error_list[]='<span class="label warning">'.$error.'</span>';
 			}
-
-			$lab_string=new htmlElement('p');
-			if(count($researcher['lab_data'])>0) {
-				foreach($researcher['lab_data'] as $lab) {
-					if($lab['lab_pi']==$email) {
-						$labs[]='<span class="label primary">'.$lab['lab_name'].', PI</span>';
-					} else {
-						$labs[]='<span class="label secondary">'.$lab['lab_name'].'</span>';
-					}
-				}
-				$lab_string->set('text', implode(' ',$labs));
-			}
-
-			$papers=new htmlElement('p');
-			$papers->set('text', 'Listed in '.count($researcher['publications']).' papers');
-
-			$container->set('class',"callout $container_class");
-			$title=new htmlElement('strong');
-			$title->set('text',$researcher['data']['first_name'].' '.$researcher['data']['last_name'].' ('.$researcher['data']['email'].')');
-			$container->inject($title);
-			$container->inject($lab_string);
-			$container->inject($papers);
-			$container->inject($error_string);
-			$output.=$container->output();
+			$error_string->set('text', implode(' ', $error_list));
+		} else {
+			$container_class='primary';
+			$error_string='';
 		}
+
+		$lab_string=new htmlElement('p');
+		if(count($researcher['lab_data'])>0) {
+			foreach($researcher['lab_data'] as $lab) {
+				if($lab['lab_pi']==$email) {
+					$labs[]='<span class="label primary">'.$lab['lab_name'].', PI</span>';
+				} else {
+					$labs[]='<span class="label secondary">'.$lab['lab_name'].'</span>';
+				}
+			}
+			$lab_string->set('text', implode(' ',$labs));
+		}
+
+		$papers=new htmlElement('p');
+		$papers->set('text', 'Listed in '.count($researcher['publications']).' papers');
+
+		$container->set('class',"callout $container_class");
+		$title=new htmlElement('strong');
+		$title->set('text',$researcher['data']['first_name'].' '.$researcher['data']['last_name'].' ('.$researcher['data']['email'].')');
+		$container->inject($title);
+		$container->inject($lab_string);
+		$container->inject($papers);
+		$container->inject($error_string);
+		$output.=$container->output();
 		return $output;
 	}
 
