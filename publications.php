@@ -16,7 +16,7 @@ if($USER->auth>0) {
 	$filterform->addSelect("Sort","sort",array('desc' => 'Descending', 'asc' => 'Ascending'),$_GET);
 
 	$filterform->addInput("Search Term",array('type' => 'search', 'name' => 'search_term'), $_GET);
-	$filterform->addSelect("Search Type", "search_type", array('pubmedid' => 'PubMed ID', 'title' => 'Title (exact submatches only)'), $_GET);
+	$filterform->addSelect("Search Type", "search_type", array('pubmedid' => 'PubMed ID', 'title' => 'Title', 'author_email' => 'Author E-mail'), $_GET);
 
 	$filterform->addInput("<br/>",array('type' => 'submit', 'name' => 'submit', 'value' => 'Apply Filter', 'class' => 'button'));
 
@@ -69,17 +69,18 @@ if($USER->auth>0) {
 		break;
 	}
 
+	$email_filtering_string="SELECT * FROM publications JOIN publications_xref ON publications_xref.publication_id=publications.id WHERE email='";
 	if ($_GET['id']) {
 		$filters[]="id=".$_GET['id'];
 	} elseif ($_GET['pubmedid']) {
 		$filters[]="pmid=".$_GET['pubmedid'];
+	} elseif ($_GET['author_email']) {
+		$query_string=$email_filtering_string.$_GET['author_email']."'";
 	}
 
 	if($year=filter_input(INPUT_GET,'year',FILTER_VALIDATE_INT,array('min_range' => 2000,'max_range' => 2100))) {
 		$filters[]="pubdate>='$year-01-01' AND pubdate<='$year-12-31'";
 	}
-
-	$query_string="SELECT * FROM publications ";
 
 	if ($_GET['search_term']) {
 		$search_string = $_GET['search_term'];
@@ -92,12 +93,24 @@ if($USER->auth>0) {
 			case 'title':
 				$filters[]="title LIKE '%".$search_string."%' ";
 			break;
+
+			case 'author_email':
+				$query_string=$email_filtering_string.$search_string."'";
+			break;
 		}
 	}
 
-	if (count($filters)>0) {
-		$query_string.=' WHERE '.implode(' AND ', $filters);
+	if(!isset($query_string)) {
+		$query_string="SELECT * FROM publications ";
+		if (count($filters)>0) {
+			$query_string.=' WHERE '.implode(' AND ', $filters);
+		}
+	} elseif (count($filters)>0) {
+		# Query string already contains a WHERE
+		$query_string.=' AND '.implode(' AND ', $filters);
 	}
+
+
 
 	$query=sql_query($query_string.$order_string);
 
