@@ -14,8 +14,10 @@ if($USER->auth>0) {
 	$filterform->addSelect("Year","year",$years_select,$_GET);
 	$filterform->addSelect("Order by","order_by",array('score' => 'Score', 'pubdate' => 'Publication date'),$_GET);
 	$filterform->addSelect("Sort","sort",array('desc' => 'Descending', 'asc' => 'Ascending'),$_GET);
+
 	$filterform->addInput("Pubmed ID",array('type' => 'search', 'name' => 'pubmedid'), $_GET);
-	$filterform->addInput("Title search", array('type' => 'search', 'name' => 'title_search'), $_GET);
+	$filterform->addInput("Title", array('type' => 'search', 'name' => 'title_search'), $_GET);
+
 	$filterform->addInput("<br/>",array('type' => 'submit', 'name' => 'submit', 'value' => 'Apply Filter', 'class' => 'button'));
 
 	switch($_GET['order_by']) {
@@ -79,17 +81,14 @@ if($USER->auth>0) {
 
 	$query_string="SELECT * FROM publications ";
 
-	if (!$_GET['title_search']) {
-		if(count($filters)>0) {
-			$query_string.=' WHERE '.implode(' AND ', $filters);
-		}
-		$query=sql_query($query_string.$order_string);
-	} else {
+	if ($_GET['title_search']) {
 		$search_string = $_GET['title_search'];
-		$query_string.=" WHERE title LIKE '%".$search_string."%'";
-		$query=sql_query($query_string);
+		$query_string.=" WHERE title LIKE '%".$search_string."%' ";
+		$query_string.=" AND ".implode(' AND ', $filters);
+	} else {
+		$query_string.=' WHERE '.implode(' AND ', $filters);
 	}
-
+	$query=sql_query($query_string.$order_string);
 	$publication_list=$publications->showPublicationList($query,$_GET['page']);
 } else {
 	// Not logged in
