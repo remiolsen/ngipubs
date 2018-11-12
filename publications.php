@@ -86,7 +86,7 @@ if($USER->auth>0) {
 		switch($_GET['search_type']) {
 			default:
 			case 'pubmedid':
-				$filters[]="pmid=".$_GET['search_term'];
+				$filters[]="pmid='".$_GET['search_term']."'";
 			break;
 
 			case 'title':
