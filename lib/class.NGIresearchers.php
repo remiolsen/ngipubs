@@ -522,17 +522,6 @@ class NGIresearchers {
 		return array('list' => $output, 'pagination' => $pagination_string);
 	}
 
-	public function listResearchers($researchers) {
-		/* $researchers=sql_query("SELECT * FROM researchers"); */
-		while($researcher=$researchers->fetch_assoc()) {
-			$researcher_data=$this->getResearcher($researcher['email']);
-			$researcher_list['all'][$researcher['email']]=$researcher_data;
-			if(count($researcher_data['errors'])>0) { // BUG: count(): Parameter must be an array or an object that implements Countabl
-				$researcher_list['errors'][$researcher['email']]=$researcher_data;
-			}
-		}
-		return $researcher_list;
-	}
 
 	public function formatResearcher($researcher, $email) {
 		$email=$researcher->email;
@@ -557,8 +546,8 @@ class NGIresearchers {
 		$lab_string=new htmlElement('p');
 		if(count($researcher['lab_data'])>0) {
 			foreach($researcher['lab_data'] as $lab) {
-				if($lab['lab_pi']==$email) {
-					$labs[]='<span class="label primary">'.$lab['lab_name'].', PI</span>';
+				if(!is_null($lab['lab_pi']) and ($lab['lab_pi']==$email)) {
+					$labs[]='<span class="label primary">'.$lab['lab_name'].$lab['lab_pi'].', PI</span>';
 				} else {
 					$labs[]='<span class="label secondary">'.$lab['lab_name'].'</span>';
 				}
