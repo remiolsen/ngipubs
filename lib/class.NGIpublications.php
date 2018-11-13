@@ -537,8 +537,8 @@ class NGIpublications {
 			}
 
 			$researcher_string='';
-			foreach($publication['researchers'] as $researcher) {
-				$researcher_string.='<span class="label secondary">'.$researcher.'</span> ';
+			foreach($publication['researchers'] as $researcher_email => $researcher) {
+				$researcher_string.='<span class="label secondary"><a class="publication_author_link" href="/publications.php?author_email='.$researcher_email.'">'.$researcher.'</a></span> ';
 			}
 
 			$keyword_string='';
@@ -571,6 +571,7 @@ class NGIpublications {
 			$abstract->set('text',$publication['data']['abstract']);
 
 			$researchers=new htmlElement('p');
+			#$researchers->set('text', 'My version: '.count($publication['researchers']));
 			$researchers->set('text','Matched authors: '.$researcher_string.'<br>Matched keywords in abstract: '.$keyword_string);
 
 			// Fulltext keyword matches

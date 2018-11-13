@@ -69,13 +69,14 @@ if($USER->auth>0) {
 		break;
 	}
 
-	$email_filtering_string="SELECT * FROM publications JOIN publications_xref ON publications_xref.publication_id=publications.id WHERE email='";
+	$email_filtering_string="publications.id IN (SELECT publication_id FROM publications_xref WHERE email='";
 	if ($_GET['id']) {
 		$filters[]="id=".$_GET['id'];
 	} elseif ($_GET['pubmedid']) {
 		$filters[]="pmid=".$_GET['pubmedid'];
 	} elseif ($_GET['author_email']) {
-		$query_string=$email_filtering_string.$_GET['author_email']."'";
+		$author_email=$_GET['author_email'];
+		$filters[]=$email_filtering_string.$author_email."') ";
 	}
 
 	if($year=filter_input(INPUT_GET,'year',FILTER_VALIDATE_INT,array('min_range' => 2000,'max_range' => 2100))) {
@@ -95,22 +96,16 @@ if($USER->auth>0) {
 			break;
 
 			case 'author_email':
-				$query_string=$email_filtering_string.$search_string."'";
+				$author_email=$_GET['search_term'];
+				$filters[]=$email_filtering_string.$author_email."') ";
 			break;
 		}
 	}
 
-	if(!isset($query_string)) {
-		$query_string="SELECT * FROM publications ";
-		if (count($filters)>0) {
-			$query_string.=' WHERE '.implode(' AND ', $filters);
-		}
-	} elseif (count($filters)>0) {
-		# Query string already contains a WHERE
-		$query_string.=' AND '.implode(' AND ', $filters);
+	$query_string="SELECT * FROM publications ";
+	if (count($filters)>0) {
+		$query_string.=' WHERE '.implode(' AND ', $filters);
 	}
-
-
 
 	$query=sql_query($query_string.$order_string);
 
@@ -146,6 +141,10 @@ if($USER->auth>0) {
 		<?php echo $filterform->render(); ?>
 	</div>
 	<div class="large-12 columns">
+		<?php if ($author_email) {
+			echo '<h4>Filtering on author email: '.$author_email.'</h4>';
+		}
+		?>
 		<?php echo $publication_list['list']; ?>
 	</div>
 	<div class="large-12 columns">
