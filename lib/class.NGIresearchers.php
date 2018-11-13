@@ -556,7 +556,8 @@ class NGIresearchers {
 		}
 
 		$papers=new htmlElement('p');
-		$papers->set('text', 'Listed in '.count($researcher['publications']).' papers');
+		$link_to_papers=' (<a href="/publications.php?author_email='.$researcher['data']['email'].'">view papers</a>)';
+		$papers->set('text', 'Listed in '.count($researcher['publications']).' papers.'.$link_to_papers);
 
 		$container->set('class',"callout $container_class");
 		$title=new htmlElement('strong');
