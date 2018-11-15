@@ -16,7 +16,7 @@ if($USER->auth>0) {
 	$filterform->addSelect("Sort","sort",array('desc' => 'Descending', 'asc' => 'Ascending'),$_GET);
 
 	$filterform->addInput("Search Term",array('type' => 'search', 'name' => 'search_term'), $_GET);
-	$filterform->addSelect("Search Type", "search_type", array('pubmedid' => 'PubMed ID', 'title' => 'Title', 'author_email' => 'Author E-mail', 'keyword' => 'Keyword'), $_GET);
+	$filterform->addSelect("Search Type", "search_type", array('pubmedid' => 'PubMed ID', 'title' => 'Title', 'author_email' => 'Author E-mail', 'keyword' => 'Keyword', 'doi' => 'DOI'), $_GET);
 
 	$filterform->addInput("<br/>",array('type' => 'submit', 'name' => 'submit', 'value' => 'Apply Filter', 'class' => 'button'));
 
@@ -107,6 +107,10 @@ if($USER->auth>0) {
 
 			case 'keyword':
 				$filters[]="keywords LIKE '%".$search_string."%' ";
+			break;
+
+			case 'doi':
+				$filters[]="doi='".$search_string."' ";
 			break;
 		}
 	}
