@@ -154,7 +154,7 @@ if($USER->auth>0) {
 		<?php echo $filterform->render(); ?>
 	</div>
 	<div class="large-12 columns">
-		<?php if ($author_email) {
+		<?php if (isset($author_email)) {
 			echo '<h4>Filtering on author email: '.$author_email.'</h4>';
 		}
 		?>
