@@ -538,13 +538,13 @@ class NGIpublications {
 
 			$researcher_string='';
 			foreach($publication['researchers'] as $researcher_email => $researcher) {
-				$researcher_string.='<span class="label secondary"><a class="publication_author_link" href="/publications.php?author_email='.$researcher_email.'">'.$researcher.'</a></span> ';
+				$researcher_string.='<span class="label secondary"><a class="publication_label_link" href="/publications.php?author_email='.$researcher_email.'">'.$researcher.'</a></span> ';
 			}
 
 			$keyword_string='';
 			$keyword_array=json_decode($publication['data']['keywords'],TRUE);
 			foreach($keyword_array as $keyword) {
-				$keyword_string.='<span class="label secondary">'.$keyword.'</span> ';
+				$keyword_string.='<span class="label secondary"><a class="publication_label_link" href="/publications.php?keyword='.$keyword.'">'.$keyword.'</a></span> ';
 			}
 
 			// Set up containers
