@@ -620,8 +620,10 @@ class htmlForm {
 					for($col=0;$col<$this->columns;$col++) {
 						$cell=new htmlElement('div');
 						$cell->set("class","large-".$column_class." columns");
-						$cell->inject($this->children[$row*$this->columns+$col]);
-						$container->inject($cell);
+						if (array_key_exists($row*$this->columns+$col, $this->children)) {
+							$cell->inject($this->children[$row*$this->columns+$col]);
+							$container->inject($cell);
+						}
 					}
 					$this->formelement->inject($container);
 				}

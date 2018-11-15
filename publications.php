@@ -9,13 +9,13 @@ if($USER->auth>0) {
 	$years_select[0]="All";
 	asort($years_select);
 
-	$filterform=new htmlForm("publications.php","get",6);
+	$filterform=new htmlForm("publications.php","get",4);
 	$filterform->addSelect("Status","status",array('all' => 'All', 'verified' => 'Verified', 'discarded' => 'Discarded', 'maybe' => 'Maybe', 'auto' => 'Auto', 'pending' => 'Pending'),$_GET);
 	$filterform->addSelect("Year","year",$years_select,$_GET);
 	$filterform->addSelect("Order by","order_by",array('score' => 'Score', 'pubdate' => 'Publication date'),$_GET);
 	$filterform->addSelect("Sort","sort",array('desc' => 'Descending', 'asc' => 'Ascending'),$_GET);
 
-	$filterform->addInput("Search Term",array('type' => 'search', 'name' => 'search_term'), $_GET);
+	$filterform->addInput("Search Term", array('type' => 'search', 'name' => 'search_term'), $_GET);
 	$filterform->addSelect("Search Type", "search_type", array('pubmedid' => 'PubMed ID', 'title' => 'Title', 'author_email' => 'Author E-mail', 'keyword' => 'Keyword', 'doi' => 'DOI'), $_GET);
 
 	$filterform->addInput("<br/>",array('type' => 'submit', 'name' => 'submit', 'value' => 'Apply Filter', 'class' => 'button'));
@@ -154,7 +154,7 @@ if($USER->auth>0) {
 		<?php echo $filterform->render(); ?>
 	</div>
 	<div class="large-12 columns">
-		<?php if ($author_email) {
+		<?php if (isset($author_email)) {
 			echo '<h4>Filtering on author email: '.$author_email.'</h4>';
 		}
 		?>
