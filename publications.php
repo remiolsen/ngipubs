@@ -71,11 +71,13 @@ if($USER->auth>0) {
 
 	$email_filtering_string="publications.id IN (SELECT publication_id FROM publications_xref WHERE email='";
 	if ($_GET['id']) {
-		$filters[]="id=".$_GET['id'];
+		$pub_id=trim($DB->real_escape_string( $_GET['id'] ));
+		$filters[]="id=".$pub_id;
 	} elseif ($_GET['pubmedid']) {
-		$filters[]="pmid=".$_GET['pubmedid'];
+		$pubmed_id=trim($DB->real_escape_string( $_GET['pubmedid'] ));
+		$filters[]="pmid=".$pubmed_id;
 	} elseif ($_GET['author_email']) {
-		$author_email=$_GET['author_email'];
+		$author_email=trim($DB->real_escape_string( $_GET['author_email']));
 		$filters[]=$email_filtering_string.$author_email."') ";
 	}
 
@@ -84,11 +86,11 @@ if($USER->auth>0) {
 	}
 
 	if ($_GET['search_term']) {
-		$search_string = $_GET['search_term'];
+		$search_string = trim($DB->real_escape_string( $_GET['search_term']));
 		switch($_GET['search_type']) {
 			default:
 			case 'pubmedid':
-				$filters[]="pmid='".$_GET['search_term']."'";
+				$filters[]="pmid='".$search_string."'";
 			break;
 
 			case 'title':
@@ -96,7 +98,7 @@ if($USER->auth>0) {
 			break;
 
 			case 'author_email':
-				$author_email=$_GET['search_term'];
+				$author_email=$search_string;
 				$filters[]=$email_filtering_string.$author_email."') ";
 			break;
 		}

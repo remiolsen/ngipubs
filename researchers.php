@@ -40,7 +40,8 @@ if($USER->auth>0) {
 		break;
 	}
 	if ($_GET['last_name']) {
-		$filters[]="last_name='".$_GET['last_name']."'";
+		$last_name = trim($DB->real_escape_string( $_GET['last_name'] ));
+		$filters[]="last_name='".$last_name."'";
 	}
 
 	if(count($filters)>0) {

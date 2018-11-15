@@ -60,12 +60,14 @@ if($USER->auth>0) {
 	}
 
 	if($_GET['lab_name']) {
-		$filters[]="lab_name LIKE '%".$_GET['lab_name']."%'";
+		$lab_name = trim($DB->real_escape_string( $_GET['lab_name'] ));
+		$filters[]="lab_name LIKE '%".$lab_name."%'";
 	}
 
 	// Only add if value exists in Affiliation table
 	$lab_affiliation=filter_var($_GET['lab_affiliation'],FILTER_SANITIZE_MAGIC_QUOTES);
 	if(array_key_exists($lab_affiliation, $affiliation_select) && $lab_affiliation!='0') {
+		$lab_affiliation = trim($DB->real_escape_string( $lab_affiliation ));
 		$filters[]="lab_affiliation='$lab_affiliation'";
 	}
 
