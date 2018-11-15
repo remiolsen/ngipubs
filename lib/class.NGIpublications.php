@@ -537,14 +537,14 @@ class NGIpublications {
 			}
 
 			$researcher_string='';
-			foreach($publication['researchers'] as $researcher) {
-				$researcher_string.='<span class="label secondary">'.$researcher.'</span> ';
+			foreach($publication['researchers'] as $researcher_email => $researcher) {
+				$researcher_string.='<span class="label secondary"><a class="publication_label_link" href="/publications.php?author_email='.$researcher_email.'">'.$researcher.'</a></span> ';
 			}
 
 			$keyword_string='';
 			$keyword_array=json_decode($publication['data']['keywords'],TRUE);
 			foreach($keyword_array as $keyword) {
-				$keyword_string.='<span class="label secondary">'.$keyword.'</span> ';
+				$keyword_string.='<span class="label secondary"><a class="publication_label_link" href="/publications.php?keyword='.$keyword.'">'.$keyword.'</a></span> ';
 			}
 
 			// Set up containers
@@ -571,6 +571,7 @@ class NGIpublications {
 			$abstract->set('text',$publication['data']['abstract']);
 
 			$researchers=new htmlElement('p');
+			#$researchers->set('text', 'My version: '.count($publication['researchers']));
 			$researchers->set('text','Matched authors: '.$researcher_string.'<br>Matched keywords in abstract: '.$keyword_string);
 
 			// Fulltext keyword matches
