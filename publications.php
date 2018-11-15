@@ -16,7 +16,7 @@ if($USER->auth>0) {
 	$filterform->addSelect("Sort","sort",array('desc' => 'Descending', 'asc' => 'Ascending'),$_GET);
 
 	$filterform->addInput("Search Term",array('type' => 'search', 'name' => 'search_term'), $_GET);
-	$filterform->addSelect("Search Type", "search_type", array('pubmedid' => 'PubMed ID', 'title' => 'Title', 'author_email' => 'Author E-mail'), $_GET);
+	$filterform->addSelect("Search Type", "search_type", array('pubmedid' => 'PubMed ID', 'title' => 'Title', 'author_email' => 'Author E-mail', 'keyword' => 'Keyword'), $_GET);
 
 	$filterform->addInput("<br/>",array('type' => 'submit', 'name' => 'submit', 'value' => 'Apply Filter', 'class' => 'button'));
 
@@ -77,8 +77,11 @@ if($USER->auth>0) {
 		$pubmed_id=trim($DB->real_escape_string( $_GET['pubmedid'] ));
 		$filters[]="pmid=".$pubmed_id;
 	} elseif ($_GET['author_email']) {
-		$author_email=trim($DB->real_escape_string( $_GET['author_email']));
+		$author_email=trim($DB->real_escape_string( $_GET['author_email'] ));
 		$filters[]=$email_filtering_string.$author_email."') ";
+	} elseif ($_GET['keyword']) {
+		$keyword=trim($DB->real_escape_string( $_GET['keyword'] ));
+		$filters[]="keywords LIKE '%".$keyword."%' ";
 	}
 
 	if($year=filter_input(INPUT_GET,'year',FILTER_VALIDATE_INT,array('min_range' => 2000,'max_range' => 2100))) {
@@ -100,6 +103,10 @@ if($USER->auth>0) {
 			case 'author_email':
 				$author_email=$search_string;
 				$filters[]=$email_filtering_string.$author_email."') ";
+			break;
+
+			case 'keyword':
+				$filters[]="keywords LIKE '%".$search_string."%' ";
 			break;
 		}
 	}
