@@ -41,9 +41,9 @@ $CONFIG=array(
 		'status'	=> array('Blocked','Unconfirmed','Active')
 	),
 	'publications' => array(
-		'current_year' => 2018, 
+		'current_year' => 2018,
 		'max_days' => 730,
-		'parse_cmd' => 'check_publis.py',
+		'parse_url' => 'http://localhost:8580',
 		'keywords'	=> array(
 		)
 	)
