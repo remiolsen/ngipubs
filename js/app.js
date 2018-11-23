@@ -288,4 +288,14 @@ $(document).ready(function() {
 			}
 		});
 	});
+	$('#selftest_button').on('click', function() {
+		$(this).addClass('disabled');
+		$.ajax({
+			url: "_selftest.php",
+			success: function(out) {
+				$('#test_results').addClass('callout secondary')
+				$('#test_results').html(out);
+			}
+		});
+	});
 });
