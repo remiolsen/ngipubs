@@ -14,7 +14,8 @@ class NGIpublications {
 		return $add;
 	}
 
-	public function updatePubStatus($publication_id,$status) {
+	public function updatePubStatus($publication_id,$status,$user,$comment) {
+		global $DB;
 		if($publication_id=filter_var($publication_id, FILTER_VALIDATE_INT)) {
 			if($check=sql_fetch("SELECT * FROM publications WHERE id='$publication_id' LIMIT 1")) {
 				$log=$this->addLog('Publication status updated to: '.$status,'update',$check['log']);
@@ -22,6 +23,14 @@ class NGIpublications {
 					// Reset reservation if status is set to maybe so others can pick it up
 					if($status=='maybe') {
 						$reset=sql_query("UPDATE publications SET reservation_user=NULL, reservation_timestamp=NULL WHERE id='$publication_id'");
+					}
+					$timestamp=time();
+					if($comment!='') {
+						$comment_set=sql_query("INSERT INTO comments SET
+							user_uid='".filter_var($user,FILTER_SANITIZE_NUMBER_INT)."',
+							status_set='".trim($DB->real_escape_string( $status ))."',
+							comment='".trim($DB->real_escape_string( $comment ))."',
+							timestamp='".$timestamp."'");
 					}
 					return TRUE;
 				} else {
