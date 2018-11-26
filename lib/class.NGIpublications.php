@@ -27,6 +27,7 @@ class NGIpublications {
 					$timestamp=time();
 					if($comment!='') {
 						$comment_set=sql_query("INSERT INTO comments SET
+							publication_id='".filter_var($publication_id,FILTER_SANITIZE_NUMBER_INT)."',
 							user_uid='".filter_var($user,FILTER_SANITIZE_NUMBER_INT)."',
 							status_set='".trim($DB->real_escape_string( $status ))."',
 							comment='".trim($DB->real_escape_string( $comment ))."',
@@ -633,6 +634,12 @@ class NGIpublications {
 			$tools_discard->set('id','discard-'.$publication['data']['id']);
 			$tools_discard->set('text','Discard');
 
+			$tools_comment=new htmlElement('input');
+			$tools_comment->set('type', 'text');
+			$tools_comment->set('class', 'comment-input');
+			$tools_comment->set('id','comment-'.$publication['data']['id']);
+			$tools_comment->set('placeholder','Comment');
+
 			$main->inject($title);
 			$main->inject($ref);
 			$main->inject($details);
@@ -640,6 +647,7 @@ class NGIpublications {
 			$tools->inject($tools_verify);
 			$tools->inject($tools_maybe);
 			$tools->inject($tools_discard);
+			$tools->inject($tools_comment);
 
 			$row->inject($main);
 			$row->inject($tools);

@@ -250,13 +250,15 @@ $(document).ready(function() {
 	$('.verify_button').on('click', function() {
 		var button = this;
 		var id = $(this).attr('id').split('-')[1];
+		var user_comment = $('#comment-' + id).val();
 		$.ajax({
 			url: '_publication_verify.php',
-			data: { publication_id: id, type: 'verify'},
+			data: { publication_id: id, type: 'verify', comment: user_comment},
 			dataType: 'json',
 			success: function(json) {
 				$('#status_label-' + id).text('Verified').addClass('success');
 				$('#publ-' + id).addClass('success');
+				$('#comment-' + id).val("");
 			}
 		});
 	});
@@ -264,13 +266,15 @@ $(document).ready(function() {
 	$('.discard_button').on('click', function() {
 		var button = this;
 		var id = $(this).attr('id').split('-')[1];
+		var user_comment = $('#comment-' + id).val();
 		$.ajax({
 			url: '_publication_verify.php',
-			data: { publication_id: id, type: 'discard'},
+			data: { publication_id: id, type: 'discard', comment: user_comment},
 			dataType: 'json',
 			success: function(json) {
 				$('#status_label-' + id).text('Discarded').addClass('alert');
 				$('#publ-' + id).addClass('alert');
+				$('#comment-' + id).val("");
 			}
 		});
 	});
@@ -278,13 +282,15 @@ $(document).ready(function() {
 	$('.maybe_button').on('click', function() {
 		var button = this;
 		var id = $(this).attr('id').split('-')[1];
+		var user_comment = $('#comment-' + id).val();
 		$.ajax({
 			url: '_publication_verify.php',
-			data: { publication_id: id, type: 'maybe'},
+			data: { publication_id: id, type: 'maybe', comment: user_comment},
 			dataType: 'json',
 			success: function(json) {
 				$('#status_label-' + id).text('Maybe').addClass('warning');
 				$('#publ-' + id).addClass('warning');
+				$('#comment-' + id).val("");
 			}
 		});
 	});
