@@ -14,15 +14,17 @@ class NGIpublications {
 		return $add;
 	}
 
-	public function updatePubStatus($publication_id,$status) {
+	public function updatePubStatus($publication_id,$status,$user,$comment) {
+		global $DB;
 		if($publication_id=filter_var($publication_id, FILTER_VALIDATE_INT)) {
 			if($check=sql_fetch("SELECT * FROM publications WHERE id='$publication_id' LIMIT 1")) {
-				$log=$this->addLog('Publication status updated to: '.$status,'update',$check['log']);
-				if($update=sql_query("UPDATE publications SET status='$status', log='$log' WHERE id='$publication_id'")) {
+				if($update=sql_query("UPDATE publications SET status='$status' WHERE id='$publication_id'")) {
 					// Reset reservation if status is set to maybe so others can pick it up
 					if($status=='maybe') {
 						$reset=sql_query("UPDATE publications SET reservation_user=NULL, reservation_timestamp=NULL WHERE id='$publication_id'");
 					}
+					$this->addLog($publication_id,$status,$comment,'status_updated');
+
 					return TRUE;
 				} else {
 					return FALSE;
@@ -55,7 +57,7 @@ class NGIpublications {
 			$status='found';
 		} else {
 			// Add publication to database
-			$log=$this->addLog('Publication added by search for lab: '.$lab_data['lab']['lab_name'],'add');
+
 			try {
 				$add=sql_query("INSERT INTO publications SET
 					pmid='".filter_var($article['uid'],FILTER_SANITIZE_NUMBER_INT)."',
@@ -67,8 +69,7 @@ class NGIpublications {
 					pages='".filter_var($article['pages'],FILTER_SANITIZE_NUMBER_INT)."',
 					title='".filter_var(trim($article['title']),FILTER_SANITIZE_MAGIC_QUOTES)."',
 					abstract='".filter_var(trim($article['abstract']),FILTER_SANITIZE_MAGIC_QUOTES)."',
-					authors='".filter_var(json_encode($article['authors'],JSON_UNESCAPED_UNICODE),FILTER_SANITIZE_MAGIC_QUOTES)."',
-					log='$log'");
+					authors='".filter_var(json_encode($article['authors'],JSON_UNESCAPED_UNICODE),FILTER_SANITIZE_MAGIC_QUOTES)."'");
 			}
 			catch (Exception $e) {
 				$add = false;
@@ -81,6 +82,9 @@ class NGIpublications {
 				$score_pub=$this->scorePublication($publication_id);
 				$status='added';
 				$errors[]='';
+
+				$this->addLog($publication_id,'','Publication added by search for lab: '.$lab_data['lab']['lab_name'],'added');
+
 			} else {
 				$errors[]='Could not add publication';
 				$status='error';
@@ -329,12 +333,10 @@ class NGIpublications {
 							(status IS NULL OR status='maybe') AND
 							reservation_user IS NULL
 						ORDER BY RAND() LIMIT $limit");
-
 					// Update log on the reserved papers
 					if($updated=sql_query("SELECT * FROM publications WHERE reservation_user='$user_email' AND reservation_timestamp=$timestamp")) {
 						while($publication=$updated->fetch_assoc()) {
-							$log=$this->addLog('Publication reserved for validation by: '.$user_email,'update',$publication['log']);
-							$update_log=sql_query("UPDATE publications SET log='$log' WHERE id=".$publication['id']);
+							$log=$this->addLog($publication['id'],'', '','reserved');
 						}
 					}
 				}
@@ -593,6 +595,7 @@ class NGIpublications {
 				$fulltext->set('text','<strong>No matches in fulltext</strong>');
 			}
 
+
 			$detailed_content=new htmlElement('div');
 			$detailed_content->inject($researchers);
 			$detailed_content->inject($authors);
@@ -604,6 +607,23 @@ class NGIpublications {
 
 			$details=new htmlElement('div');
 			$details->set('text',$accordion->render());
+
+			$log_rows=sql_query("SELECT * FROM publications_logs JOIN publications ON publications_logs.publication_id=publications.id WHERE publication_id=".$publication['data']['id']);
+			$log_list=array();
+			if($log_rows) {
+				while($log_item=$log_rows->fetch_assoc()) {
+					$log_list[]=$log_item;
+					#$researcher_list[$researcher['email']]=trim($researcher['first_name']).' '.trim($researcher['last_name']);
+				}
+			}
+
+			$log_table=$this->formatLog($log_list);
+
+			$log_accordion=new zurbAccordion(TRUE,TRUE);
+			$log_accordion->addAccordion('Log Details',$log_table);
+
+			$log_details=new htmlElement('div');
+			$log_details->set('text',$log_accordion->render());
 
 			$tools_verify=new htmlElement('span');
 			$tools_verify->set('class','tiny success button expanded verify_button');
@@ -620,13 +640,21 @@ class NGIpublications {
 			$tools_discard->set('id','discard-'.$publication['data']['id']);
 			$tools_discard->set('text','Discard');
 
+			$tools_comment=new htmlElement('input');
+			$tools_comment->set('type', 'text');
+			$tools_comment->set('class', 'comment-input');
+			$tools_comment->set('id','comment-'.$publication['data']['id']);
+			$tools_comment->set('placeholder','Comment');
+
 			$main->inject($title);
 			$main->inject($ref);
 			$main->inject($details);
+			$main->inject($log_details);
 
 			$tools->inject($tools_verify);
 			$tools->inject($tools_maybe);
 			$tools->inject($tools_discard);
+			$tools->inject($tools_comment);
 
 			$row->inject($main);
 			$row->inject($tools);
@@ -706,38 +734,80 @@ class NGIpublications {
 		return array('data' => array('total' => count($authors), 'matched' => $matched, 'added' => $added), 'errors' => $errors);
 	}
 
-	// IN PROGRESS!!!
-	// ------------------------
-	private function formatLog($log_json) {
-		$log=json_decode($log_json);
-		$container=new htmlElement('div');
-		$container->set('class','log');
-		foreach($log as $entry) {
 
+	private function formatLog($log_list) {
+		$table=new htmlElement('table');
+		$table->set('class','log');
+		$table_head=new htmlElement('thead');
+		$table_head_tr=new htmlElement('tr');
+
+		$table_head_th=new htmlElement('th');
+		$table_head_th->set('text', "User");
+		$table_head_tr->inject($table_head_th);
+
+		$table_head_th=new htmlElement('th');
+		$table_head_th->set('text', "Comment");
+		$table_head_tr->inject($table_head_th);
+
+		$table_head_th=new htmlElement('th');
+		$table_head_th->set('text', "Type");
+		$table_head_tr->inject($table_head_th);
+
+		$table_head_th=new htmlElement('th');
+		$table_head_th->set('text', "Status set");
+		$table_head_tr->inject($table_head_th);
+
+		$table_head_th=new htmlElement('th');
+		$table_head_th->set('text', "Timestamp");
+		$table_head_tr->inject($table_head_th);
+
+		$table_head->inject($table_head_tr);
+		$table->inject($table_head);
+
+		$table_body=new htmlElement('tbody');
+
+		foreach($log_list as $entry) {
+			$log_item=new htmlElement('tr');
+			$log_item_td = new htmlElement('td');
+			$log_item_td->set('text', $entry['user_email']);
+			$log_item->inject($log_item_td);
+			$log_item_td = new htmlElement('td');
+			$log_item_td->set('text', $entry['comment']);
+			$log_item->inject($log_item_td);
+			$log_item_td = new htmlElement('td');
+			$log_item_td->set('text', $entry['type']);
+			$log_item->inject($log_item_td);
+			$log_item_td = new htmlElement('td');
+			$log_item_td->set('text', $entry['status_set']);
+			$log_item->inject($log_item_td);
+			$log_item_td = new htmlElement('td');
+			$log_item_td->set('text', gmdate('Y-m-d H:i:s', $entry['timestamp']));
+
+			$log_item->inject($log_item_td);
+
+			$table_body->inject($log_item);
 		}
+		$table->inject($table_body);
+		return $table->Output();
+
 	}
 
-	private function addLog($message,$action,$json=FALSE) {
+	private function addLog($publication_id,$status,$message,$type) {
 		global $USER;
+		global $DB;
+		$timestamp = time();
 
-		if(trim($message)!="") {
-			if($json) {
-				$log=json_decode($json,TRUE);
-			} else {
-				$log=array();
-			}
+		$query_string = "INSERT INTO publications_logs SET
+				publication_id='".filter_var($publication_id,FILTER_SANITIZE_NUMBER_INT)."',
+				user_uid='".filter_var($USER->data['uid'],FILTER_SANITIZE_NUMBER_INT)."',
+				user_email='".filter_var($USER->data['user_email'],FILTER_SANITIZE_EMAIL)."',
+				status_set='".trim($DB->real_escape_string( $status ))."',
+				comment='".trim($DB->real_escape_string( $message ))."',
+				type='".$type."',
+				timestamp='".$timestamp."'";
 
-			$entry=array(
-				'timestamp' => time(),
-				'user'		=> $USER->data['user_email'],
-				'action'	=> $action,
-				'message'	=> $message);
-
-			$log[]=$entry;
-			return json_encode($log);
-		} else {
-			return FALSE;
-		}
+		$comment_set=sql_query($query_string);
+		return TRUE;
 	}
 
 	private function getLastLog($json) {
