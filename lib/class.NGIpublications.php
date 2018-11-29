@@ -561,7 +561,7 @@ class NGIpublications {
 
 			//Content
 			$title=new htmlElement('h5');
-			$title->set('text',$publication_status.'<span class="label">'.$publication['data']['score'].'</span> '.html_entity_decode($publication['data']['title']).' (<a href="https://www.ncbi.nlm.nih.gov/pubmed/'.$publication['data']['pmid'].'">Pubmed</a>)');
+			$title->set('text',$publication_status.'<span class="label">'.$publication['data']['score'].'</span> '.html_entity_decode($publication['data']['title']).' (<a href="https://www.ncbi.nlm.nih.gov/pubmed/'.$publication['data']['pmid'].'" target="_blank">Pubmed</a>)');
 
 			$ref=new htmlElement('p');
 			$ref->set('text',$publication['authors'][0].' et. al. '.date('Y',strtotime($publication['data']['pubdate'])).', '.$publication['data']['journal'].', '.$reference);
