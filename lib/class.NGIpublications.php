@@ -500,6 +500,7 @@ class NGIpublications {
 
 	// Format and display details of a publication from the database
 	public function formatPublication($publication) {
+		global $CONFIG;
 		$publication=$this->publicationData($publication);
 
 		$container=new htmlElement('div');
@@ -561,7 +562,10 @@ class NGIpublications {
 
 			//Content
 			$title=new htmlElement('h5');
-			$title->set('text',$publication_status.'<span class="label">'.$publication['data']['score'].'</span> '.html_entity_decode($publication['data']['title']).' (<a href="https://www.ncbi.nlm.nih.gov/pubmed/'.$publication['data']['pmid'].'" target="_blank">Pubmed</a>)');
+			$title->set('text',$publication_status.'<span class="label">'.$publication['data']['score'].'</span> '
+					.html_entity_decode($publication['data']['title']).' '
+					.'(<a href="https://www.ncbi.nlm.nih.gov/pubmed/'.$publication['data']['pmid'].'" target="_blank">Pubmed</a>'
+					.' | <a href="'.$CONFIG['site']['URL'].'/publications.php?id='.html_entity_decode($publication['data']['id']).'">Permalink</a>)');
 
 			$ref=new htmlElement('p');
 			$ref->set('text',$publication['authors'][0].' et. al. '.date('Y',strtotime($publication['data']['pubdate'])).', '.$publication['data']['journal'].', '.$reference);
