@@ -184,13 +184,9 @@ class NGIpublications {
 				try {
 					$pmid = $pmidq['pmid'];
 					$key_conf = $CONFIG['publications']['keywords'];
-					$keywords = '"' . implode('"  "', $key_conf) . '"';
-					$parser = $CONFIG['publications']['parse_cmd'];
-					// Need to use passthru otherwise the output will show up in the http response
-					ob_start();
-					passthru("$parser -k $keywords -p $pmid 2> /dev/null", $ret_var);
-					$check_publis = ob_get_contents();
-					ob_end_clean();
+					$keywords = http_build_query(array('key' => implode(',', $key_conf)));
+			  	$parse_url = $CONFIG['publications']['parse_url'].'/annotate/'.$pmid.'?';
+					$check_publis = file_get_contents($parse_url.$keywords);
 					$result = json_decode($check_publis);
 					$status = $result[0]->{'found_text'};
 					$matches = $result[0]->{'matches'};

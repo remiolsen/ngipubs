@@ -34,7 +34,14 @@ if($USER->auth<2) {
 				PubTrawl
 			</div>
 			<div class="card-section">
-				Launch the huge and slow process of fetching publications from pubmed from <a href="/pubtrawl.php">here</a>.
+				<p>This is a huge and slow process of fetching publications from pubmed. Before you start it's best to
+				run a the self-test to make sure this script works as intended</p>
+				<div class="button-group">
+					<button class="small button right" id="selftest_button">Run self-test</button>
+					<a href="/pubtrawl.php" class="small button right" id="pubtrawl_button">Start pubtrawl</a>
+				</div>
+				<div class="" id="test_results">
+				</div>
 			</div>
 		</div>
 	</div>
