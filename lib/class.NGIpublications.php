@@ -488,10 +488,27 @@ class NGIpublications {
 
 		$xref=sql_query("SELECT * FROM publications_xref JOIN researchers ON publications_xref.email=researchers.email WHERE publication_id=".$publication['id']);
 
+		$pis=sql_query("SELECT publications_xref.email FROM publications_xref "
+					   ."JOIN researchers ON publications_xref.email=researchers.email "
+					   ."JOIN labs ON publications_xref.email=labs.lab_pi "
+					   ." WHERE publication_id=".$publication['id']);
+
+		$pi_list=array();
+		if($pis) {
+			while($pi=$pis->fetch_assoc()) {
+				$pi_list[]=$pi['email'];
+			}
+		}
+
 		$researcher_list=array();
 		if($xref) {
 			while($researcher=$xref->fetch_assoc()) {
-				$researcher_list[$researcher['email']]=trim($researcher['first_name']).' '.trim($researcher['last_name']);
+				if (in_array($researcher['email'], $pi_list)) {
+					$pi_string = ' (PI)';
+				} else {
+					$pi_string = '';
+				}
+				$researcher_list[$researcher['email']]=trim($researcher['first_name']).' '.trim($researcher['last_name']).$pi_string;
 			}
 		}
 
