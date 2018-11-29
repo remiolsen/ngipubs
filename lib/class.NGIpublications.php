@@ -612,6 +612,23 @@ class NGIpublications {
 			$details=new htmlElement('div');
 			$details->set('text',$accordion->render());
 
+			$log_rows=sql_query("SELECT * FROM publications_logs JOIN publications ON publications_logs.publication_id=publications.id WHERE publication_id=".$publication['data']['id']);
+			$log_list=array();
+			if($log_rows) {
+				while($log_item=$log_rows->fetch_assoc()) {
+					$log_list[]=$log_item;
+					#$researcher_list[$researcher['email']]=trim($researcher['first_name']).' '.trim($researcher['last_name']);
+				}
+			}
+
+			$log_table=$this->formatLog($log_list);
+
+			$log_accordion=new zurbAccordion(TRUE,TRUE);
+			$log_accordion->addAccordion('Log Details',$log_table);
+
+			$log_details=new htmlElement('div');
+			$log_details->set('text',$log_accordion->render());
+
 			$tools_verify=new htmlElement('span');
 			$tools_verify->set('class','tiny success button expanded verify_button');
 			$tools_verify->set('id','verify-'.$publication['data']['id']);
@@ -636,6 +653,7 @@ class NGIpublications {
 			$main->inject($title);
 			$main->inject($ref);
 			$main->inject($details);
+			$main->inject($log_details);
 
 			$tools->inject($tools_verify);
 			$tools->inject($tools_maybe);
@@ -720,38 +738,63 @@ class NGIpublications {
 		return array('data' => array('total' => count($authors), 'matched' => $matched, 'added' => $added), 'errors' => $errors);
 	}
 
-	// IN PROGRESS!!!
-	// ------------------------
-	private function formatLog($log_json) {
-		$log=json_decode($log_json);
-		$container=new htmlElement('div');
-		$container->set('class','log');
-		foreach($log as $entry) {
 
+	private function formatLog($log_list) {
+		$table=new htmlElement('table');
+		$table->set('class','log');
+		$table_head=new htmlElement('thead');
+		$table_head_tr=new htmlElement('tr');
+
+		$table_head_th=new htmlElement('th');
+		$table_head_th->set('text', "User");
+		$table_head_tr->inject($table_head_th);
+
+		$table_head_th=new htmlElement('th');
+		$table_head_th->set('text', "Comment");
+		$table_head_tr->inject($table_head_th);
+
+		$table_head_th=new htmlElement('th');
+		$table_head_th->set('text', "Type");
+		$table_head_tr->inject($table_head_th);
+
+		$table_head_th=new htmlElement('th');
+		$table_head_th->set('text', "Status set");
+		$table_head_tr->inject($table_head_th);
+
+		$table_head_th=new htmlElement('th');
+		$table_head_th->set('text', "Timestamp");
+		$table_head_tr->inject($table_head_th);
+
+		$table_head->inject($table_head_tr);
+		$table->inject($table_head);
+
+		$table_body=new htmlElement('tbody');
+
+		foreach($log_list as $entry) {
+			$log_item=new htmlElement('tr');
+			$log_item_td = new htmlElement('td');
+			$log_item_td->set('text', $entry['user_email']);
+			$log_item->inject($log_item_td);
+			$log_item_td = new htmlElement('td');
+			$log_item_td->set('text', $entry['comment']);
+			$log_item->inject($log_item_td);
+			$log_item_td = new htmlElement('td');
+			$log_item_td->set('text', $entry['type']);
+			$log_item->inject($log_item_td);
+			$log_item_td = new htmlElement('td');
+			$log_item_td->set('text', $entry['status_set']);
+			$log_item->inject($log_item_td);
+			$log_item_td = new htmlElement('td');
+			$log_item_td->set('text', gmdate('Y-m-d H:i:s', $entry['timestamp']));
+
+			$log_item->inject($log_item_td);
+
+			$table_body->inject($log_item);
 		}
+		$table->inject($table_body);
+		return $table->Output();
+
 	}
-
-	private function addLog($message,$action,$json=FALSE) {
-		global $USER;
-
-		if(trim($message)!="") {
-			if($json) {
-				$log=json_decode($json,TRUE);
-			} else {
-				$log=array();
-			}
-
-			$entry=array(
-				'timestamp' => time(),
-				'user'		=> $USER->data['user_email'],
-				'action'	=> $action,
-				'message'	=> $message);
-
-			$log[]=$entry;
-			return json_encode($log);
-		} else {
-			return FALSE;
-		}
 
 	private function addLog($publication_id,$status,$message,$type) {
 		global $USER;
