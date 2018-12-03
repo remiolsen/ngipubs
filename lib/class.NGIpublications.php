@@ -484,10 +484,27 @@ class NGIpublications {
 
 		$xref=sql_query("SELECT * FROM publications_xref JOIN researchers ON publications_xref.email=researchers.email WHERE publication_id=".$publication['id']);
 
+		$pis=sql_query("SELECT publications_xref.email FROM publications_xref "
+					   ."JOIN researchers ON publications_xref.email=researchers.email "
+					   ."JOIN labs ON publications_xref.email=labs.lab_pi "
+					   ." WHERE publication_id=".$publication['id']);
+
+		$pi_list=array();
+		if($pis) {
+			while($pi=$pis->fetch_assoc()) {
+				$pi_list[]=$pi['email'];
+			}
+		}
+
 		$researcher_list=array();
 		if($xref) {
 			while($researcher=$xref->fetch_assoc()) {
-				$researcher_list[$researcher['email']]=trim($researcher['first_name']).' '.trim($researcher['last_name']);
+				if (in_array($researcher['email'], $pi_list)) {
+					$pi_string = ' (PI)';
+				} else {
+					$pi_string = '';
+				}
+				$researcher_list[$researcher['email']]=trim($researcher['first_name']).' '.trim($researcher['last_name']).$pi_string;
 			}
 		}
 
@@ -496,6 +513,7 @@ class NGIpublications {
 
 	// Format and display details of a publication from the database
 	public function formatPublication($publication) {
+		global $CONFIG;
 		$publication=$this->publicationData($publication);
 
 		$container=new htmlElement('div');
@@ -557,7 +575,10 @@ class NGIpublications {
 
 			//Content
 			$title=new htmlElement('h5');
-			$title->set('text',$publication_status.'<span class="label">'.$publication['data']['score'].'</span> '.html_entity_decode($publication['data']['title']).' (<a href="https://www.ncbi.nlm.nih.gov/pubmed/'.$publication['data']['pmid'].'">Pubmed</a>)');
+			$title->set('text',$publication_status.'<span class="label">'.$publication['data']['score'].'</span> '
+					.html_entity_decode($publication['data']['title']).' '
+					.'(<a href="https://www.ncbi.nlm.nih.gov/pubmed/'.$publication['data']['pmid'].'" target="_blank">Pubmed</a>'
+					.' | <a href="'.$CONFIG['site']['URL'].'/publications.php?id='.html_entity_decode($publication['data']['id']).'">Permalink</a>)');
 
 			$ref=new htmlElement('p');
 			$ref->set('text',$publication['authors'][0].' et. al. '.date('Y',strtotime($publication['data']['pubdate'])).', '.$publication['data']['journal'].', '.$reference);
