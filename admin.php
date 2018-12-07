@@ -38,7 +38,7 @@ if($USER->auth<2) {
 				run a the self-test to make sure this script works as intended</p>
 				<div class="button-group">
 					<button class="small button right" id="selftest_button">Run self-test</button>
-					<a href="/pubtrawl.php" class="small button right" id="pubtrawl_button">Start pubtrawl</a>
+					<a href="/pubtrawl.php" class="small button right disabled" id="pubtrawl_button">Start pubtrawl</a>
 				</div>
 				<div class="" id="test_results">
 				</div>
