@@ -294,13 +294,36 @@ $(document).ready(function() {
 			}
 		});
 	});
+
+	function run_test(test,queue) {
+		$(document).queue(queue, function() {
+			$.ajax({
+				url: "_selftest.php?test="+test,
+				success: function(out) {
+					if(out.includes("OK")) {
+						$('#test_results').html($('#test_results').html()+test+": OK<br/>");
+					} else {
+						$('#test_results').html($('#test_results').html()+test+": FAIL<br/>"+out+"<br/>");
+					}
+					$(document).dequeue(queue);
+				}
+			});
+		});
+	}
+
 	$('#selftest_button').on('click', function() {
 		$(this).addClass('disabled');
 		$.ajax({
 			url: "_selftest.php",
 			success: function(out) {
+				var test = jQuery.parseJSON(out);
 				$('#test_results').addClass('callout secondary')
-				$('#test_results').html(out);
+				$('#test_results').html("");
+				for(var i=0; i<test.length; i++){
+					run_test(test[i],"sfq")
+				}
+				$(document).queue("sfq",function(){$('#selftest_button').removeClass('disabled');});
+				$(document).dequeue("sfq");
 			}
 		});
 	});
