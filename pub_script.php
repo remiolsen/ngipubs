@@ -16,7 +16,7 @@ if (!isset($argc) || is_null($argc))
 $labid = $argv[1];
 # Start forgery
 $USER = new stdClass();
-$USER->data = [];
+$USER->data = array();
 $USER->data["uid"] = 1;
 $USER->data["user_email"] = "pub_script@ngipubs.local";
 global $USER;
@@ -30,8 +30,8 @@ $labs=[];
 if(isset($labid)) {
   array_push($labs, [$labid, "cli_parameter"]);
 } else {
+  $labs_query=sql_query("SELECT * FROM labs WHERE lab_status <> 'disabled' or lab_status IS NULL ORDER BY lab_name");
   while($lab=$labs_query->fetch_assoc()) {
-    $labs_query=sql_query("SELECT * FROM labs WHERE lab_status <> 'disabled' or lab_status IS NULL ORDER BY lab_name");
   	$id = $researchers->getClarityID($lab['lab_clarity_uri']);
   	array_push($labs, [$id, $lab['lab_name']]);
   }

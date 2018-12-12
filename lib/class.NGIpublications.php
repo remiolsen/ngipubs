@@ -14,6 +14,35 @@ class NGIpublications {
 		return $add;
 	}
 
+	public function updatePublication($publication_id, $no_annotate=FALSE, $force_annotate=FALSE) {
+		global $DB;
+		if(!$publication_id=filter_var($publication_id, FILTER_VALIDATE_INT)) {
+			return FALSE;
+		}
+		$orig = sql_fetch("SELECT * FROM publications WHERE id='$publication_id' LIMIT 1");
+		$orig_text = sql_fetch("SELECT * FROM publications_text WHERE publication_id='$publication_id' LIMIT 1");
+
+		if($no_annotate) {
+			$sc = $this->scorePublication($publication_id);
+			$ft = TRUE;
+		}
+		else {
+			if($orig_text->$text = 'false'){
+				$ft = $this->addFullText($publication_id);
+				$sc = $this->scorePublication($publication_id);
+			}
+			elseif($force_annotate){
+				$ft = $this->addFullText($publication_id, TRUE);
+				$sc = $this->scorePublication($publication_id);
+			}
+			else {
+				return FALSE;
+			}
+		}
+		return array("pubid"=>$publication_id, "full_text"=> $ft, "scoring" => $sc);
+
+	}
+
 	public function updatePubStatus($publication_id,$status,$user,$comment) {
 		global $DB;
 		if($publication_id=filter_var($publication_id, FILTER_VALIDATE_INT)) {
@@ -174,7 +203,7 @@ class NGIpublications {
 		return $list;
 	}
 
-	public function addFullText($publication_id) {
+	public function addFullText($publication_id, $update=FALSE) {
 		global $CONFIG;
 		global $DB;
 
@@ -196,11 +225,11 @@ class NGIpublications {
 					return false;
 				}
 				if($ret_var > 0) {return false;}
-				if($existing_text=sql_fetch("SELECT * from publications_text WHERE publication_id='$publication_id'")) {
-					if($existing_text['status'] == "error" and $status != "error") {
-
+				if($existing_text=sql_fetch("SELECT * from publications_text WHERE publication_id='$publication_id' LIMIT 1")) {
+					if($existing_text['text'] == 'false' or $update) {
 						$out=sql_query("UPDATE publications_text SET status='$status',
-						text='".filter_var(json_encode($matches,JSON_UNESCAPED_UNICODE),FILTER_SANITIZE_MAGIC_QUOTES)."'");
+						text='".filter_var(json_encode($matches,JSON_UNESCAPED_UNICODE),FILTER_SANITIZE_MAGIC_QUOTES)."'
+						WHERE publication_id=$publication_id");
 					}
 					else {
 						return false;
